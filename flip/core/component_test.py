@@ -2,7 +2,7 @@ from typing import override
 
 import pytest
 
-from flip.component import Component
+from flip.core.component import Component
 
 
 def test_ctor_empty() -> None:

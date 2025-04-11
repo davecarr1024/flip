@@ -1,9 +1,9 @@
 from collections.abc import Mapping
 from typing import Iterable, Optional, final, override
 
-from flip.error import Error
-from flip.tickable import Tickable
-from flip.validatable import Validatable
+from flip.core.error import Error
+from flip.core.tickable import Tickable
+from flip.core.validatable import Validatable
 
 
 class Component(Tickable, Validatable):
@@ -92,7 +92,6 @@ class Component(Tickable, Validatable):
 
     @override
     def _validate(self) -> None:
-        print(f"validating {self.name} parent={self.parent} children={self.children}")
         if self.parent is not None and self not in self.parent.children:
             raise self._validation_error(f"{self} not in parent {self.parent}")
         for child in self.children:

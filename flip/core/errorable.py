@@ -1,6 +1,6 @@
 from typing import Callable, Type
 
-from flip.error import Error
+from flip.core.error import Error
 
 
 class Errorable:

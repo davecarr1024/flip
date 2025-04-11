@@ -1,7 +1,7 @@
 from typing import Optional, override
 
-from flip.component import Component
-from flip.simulation import Simulation
+from flip.core.component import Component
+from flip.core.simulation import Simulation
 
 
 class TickCounter(Component):

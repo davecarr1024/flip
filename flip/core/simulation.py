@@ -1,7 +1,7 @@
 from typing import Iterable, Optional
 
-from flip.component import Component
-from flip.error import Error
+from flip.core.component import Component
+from flip.core.error import Error
 
 
 class Simulation(Component):

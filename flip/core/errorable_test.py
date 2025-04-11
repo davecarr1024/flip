@@ -2,8 +2,8 @@ from typing import override
 
 import pytest
 
-from flip.error import Error
-from flip.errorable import Errorable
+from flip.core.error import Error
+from flip.core.errorable import Errorable
 
 
 class _Errorable(Errorable):

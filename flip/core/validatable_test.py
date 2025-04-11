@@ -2,7 +2,7 @@ from typing import override
 
 import pytest
 
-from flip.validatable import Validatable
+from flip.core.validatable import Validatable
 
 
 class _Validatable(Validatable):
