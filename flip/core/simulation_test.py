@@ -1,34 +1,29 @@
-from typing import Optional, override
+from typing import Optional
 
 from flip.core.component import Component
 from flip.core.simulation import Simulation
+from flip.core.tickable_test import TickCounter
 
 
-class TickCounter(Component):
+class _TickCounter(Component, TickCounter):
     def __init__(
         self,
+        /,
         max_ticks: Optional[int] = None,
     ) -> None:
-        super().__init__()
-        self.ticks = 0
-        self.max_ticks = max_ticks
-
-    @override
-    def tick(self) -> None:
-        self.ticks += 1
-        if self.max_ticks is not None and self.ticks >= self.max_ticks:
-            raise Simulation.EndSimulation()
+        Component.__init__(self)
+        TickCounter.__init__(self, max_ticks=max_ticks)
 
 
 def test_run_for() -> None:
-    tc = TickCounter()
+    tc = _TickCounter()
     sim = Simulation([tc])
     sim.run_for(10)
-    assert tc.ticks == 10
+    assert tc.react_count == 10
 
 
 def test_run_forever() -> None:
-    tc = TickCounter(10)
+    tc = _TickCounter(max_ticks=10)
     sim = Simulation([tc])
     sim.run_forever()
-    assert tc.ticks == 10
+    assert tc.react_count == 10

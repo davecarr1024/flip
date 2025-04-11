@@ -17,13 +17,19 @@ class Simulation(Component):
     ) -> None:
         super().__init__(name=name, children=children)
 
+    def _tick(self) -> None:
+        self.tick_send()
+        self.tick_propagate()
+        self.tick_receive()
+        self.tick_react()
+
     def run_for(self, ticks: int) -> None:
         for _ in range(ticks):
-            self.tick()
+            self._tick()
 
     def run_forever(self) -> None:
         try:
             while True:
-                self.tick()
+                self._tick()
         except self.EndSimulation:
             pass

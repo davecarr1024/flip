@@ -1,5 +1,3 @@
-from typing import override
-
 import pytest
 
 from flip.core.component import Component
@@ -106,23 +104,6 @@ def test_get_grandchild_by_name() -> None:
     assert p.child("child") is c
     assert p.child("child.grandchild") is g
     assert c.child("grandchild") is g
-
-
-def test_tick_child() -> None:
-    class Child(Component):
-        def __init__(self, name: str, parent: Component) -> None:
-            super().__init__(name, parent)
-            self.ticked = False
-
-        @override
-        def tick(self) -> None:
-            self.ticked = True
-
-    p = Component("parent")
-    c = Child("child", p)
-    assert not c.ticked
-    p.tick()
-    assert c.ticked
 
 
 def test_default_name() -> None:

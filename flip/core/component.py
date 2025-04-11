@@ -99,7 +99,7 @@ class Component(Tickable, Validatable):
                 raise self._validation_error(f"child {child} not in parent {self}")
             child._validate()
 
+    @property
     @override
-    def tick(self) -> None:
-        for child in self.children:
-            child.tick()
+    def _tickable_children(self) -> Iterable[Tickable]:
+        return self.children
