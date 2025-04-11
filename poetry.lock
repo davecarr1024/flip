@@ -308,6 +308,20 @@ pytest = ">=4.6"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
 
 [[package]]
+name = "pytest-repeat"
+version = "0.9.4"
+description = "pytest plugin for repeating tests"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "pytest_repeat-0.9.4-py3-none-any.whl", hash = "sha256:c1738b4e412a6f3b3b9e0b8b29fcd7a423e50f87381ad9307ef6f5a8601139f3"},
+    {file = "pytest_repeat-0.9.4.tar.gz", hash = "sha256:d92ac14dfaa6ffcfe6917e5d16f0c9bc82380c135b03c2a5f412d2637f224485"},
+]
+
+[package.dependencies]
+pytest = "*"
+
+[[package]]
 name = "pytest-subtests"
 version = "0.14.1"
 description = "unittest subTest() support and subtests fixture"
@@ -363,4 +377,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.13"
-content-hash = "8e276f3986dd6bd6c99b3e44e4b459792ec7da626369f2dc38fb5bbdde6cc19d"
+content-hash = "1bdcb9c3337be3ef7c6ba9bbb336bc4d246f60741a396703ae8e713bc6c69975"
