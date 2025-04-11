@@ -37,3 +37,6 @@ class Validatable(ABC, Errorable):
 
     @abstractmethod
     def _validate(self) -> None: ...
+
+    def validate(self) -> None:
+        self._validate_if_enabled()

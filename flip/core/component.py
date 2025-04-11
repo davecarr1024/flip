@@ -14,18 +14,21 @@ class Component(Tickable, Validatable):
         name: Optional[str] = None,
         parent: Optional["Component"] = None,
         children: Optional[Iterable["Component"]] = None,
+        pins: Optional[Iterable["pin.Pin"]] = None,
     ) -> None:
         Tickable.__init__(self)
         Validatable.__init__(self)
         self.__name = name or self.__class__.__name__
         self.__parent: Optional[Component] = None
         self.__children = frozenset[Component]()
+        self.__pins = frozenset[pin.Pin]()
         with self._pause_validation():
             if parent is not None:
                 self.parent = parent
             if children is not None:
-                for child in children:
-                    self.add_child(child)
+                self.children = frozenset(children)
+            if pins is not None:
+                self.pins = frozenset(pins)
 
     @override
     def __eq__(self, rhs: object) -> bool:
@@ -54,31 +57,32 @@ class Component(Tickable, Validatable):
         if parent is not self.__parent:
             with self._pause_validation():
                 if self.__parent is not None:
-                    self.__parent.remove_child(self)
+                    self.__parent.children -= frozenset({self})
                 self.__parent = parent
                 if self.__parent is not None:
-                    self.__parent.add_child(self)
+                    self.__parent.children |= frozenset({self})
 
     @final
     @property
     def children(self) -> frozenset["Component"]:
         return self.__children
 
-    def add_child(self, child: "Component") -> None:
-        if child not in self.children:
+    @final
+    @children.setter
+    def children(self, children: frozenset["Component"]) -> None:
+        if children != self.__children:
             with self._pause_validation():
-                self.__children |= frozenset({child})
-                child.parent = self
-
-    def remove_child(self, child: "Component") -> None:
-        if child in self.children:
-            with self._pause_validation():
-                self.__children -= frozenset({child})
-                child.parent = None
+                new_children = children - self.__children
+                removed_children = self.__children - children
+                self.__children = children
+                for child in new_children:
+                    child.parent = self
+                for child in removed_children:
+                    child.parent = None
 
     @property
     def children_by_name(self) -> Mapping[str, "Component"]:
-        return {child.name: child for child in self.__children}
+        return {child.name: child for child in self.children}
 
     def child(self, name: str) -> "Component":
         names = name.split(".")
@@ -90,6 +94,22 @@ class Component(Tickable, Validatable):
                 raise self._error(f"no child named {name}", self.KeyError) from e
         return node
 
+    @property
+    def pins(self) -> frozenset["pin.Pin"]:
+        return self.__pins
+
+    @pins.setter
+    def pins(self, pins: frozenset["pin.Pin"]) -> None:
+        if pins != self.__pins:
+            with self._pause_validation():
+                new_pins = pins - self.__pins
+                removed_pins = self.__pins - pins
+                self.__pins = pins
+                for pin in new_pins:
+                    pin.component = self
+                for pin in removed_pins:
+                    pin.component = None
+
     @override
     def _validate(self) -> None:
         if self.parent is not None and self not in self.parent.children:
@@ -97,9 +117,17 @@ class Component(Tickable, Validatable):
         for child in self.children:
             if child.parent is not self:
                 raise self._validation_error(f"child {child} not in parent {self}")
-            child._validate()
+            child.validate()
+        for pin_ in self.pins:
+            if pin_.component is not self:
+                raise self._validation_error(f"pin {pin_} not in component {self}")
+            pin_.validate()
 
     @property
     @override
     def _tickable_children(self) -> Iterable[Tickable]:
-        return self.children
+        yield from self.children
+        yield from self.pins
+
+
+from flip.core import pin

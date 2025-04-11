@@ -1,6 +1,6 @@
 import pytest
 
-from flip.core.component import Component
+from flip.core import Component, Pin
 
 
 def test_ctor_empty() -> None:
@@ -50,7 +50,7 @@ def test_add_child() -> None:
     assert c.parent is None
     assert p.children == frozenset()
     assert c.children == frozenset()
-    p.add_child(c)
+    p.children = frozenset({c})
     assert p.parent is None
     assert c.parent is p
     assert p.children == frozenset({c})
@@ -59,17 +59,15 @@ def test_add_child() -> None:
 
 def test_remove_child() -> None:
     p = Component("parent")
-    c = Component("child")
-    p.add_child(c)
+    c = Component("child", parent=p)
     assert p.parent is None
     assert c.parent is p
     assert p.children == frozenset({c})
     assert c.children == frozenset()
-    p.remove_child(c)
+    p.children = frozenset()
     assert p.parent is None
     assert c.parent is None
     assert p.children == frozenset()
-    assert c.children == frozenset()
 
 
 def test_eq() -> None:
@@ -132,3 +130,34 @@ def test_invalid_children() -> None:
         c._pause_validation(),  # type:ignore
     ):
         p._Component__children = frozenset()  # type:ignore
+
+
+def test_ctor_pins() -> None:
+    p = Pin("pin")
+    c = Component("component", pins=[p])
+    assert c.pins == frozenset({p})
+    assert p.component is c
+
+
+def test_set_pins() -> None:
+    p1 = Pin("p1")
+    p2 = Pin("p2")
+    c = Component("c", pins=[p1])
+    assert c.pins == frozenset({p1})
+    assert p1.component is c
+    assert p2.component is None
+    c.pins = frozenset({p2})
+    assert c.pins == frozenset({p2})
+    assert p1.component is None
+    assert p2.component is c
+
+
+def test_invalid_pins() -> None:
+    p = Pin("pin")
+    c = Component("component", pins=[p])
+    with (
+        pytest.raises(Component.ValidationError),
+        c._pause_validation(),  # type:ignore
+        p._pause_validation(),  # type:ignore
+    ):
+        p._Pin__component = None  # type:ignore

@@ -43,6 +43,7 @@ select = ["E", "F", "I", "B"]
 # Specify the rule codes that Ruff is allowed to fix.
 fixable = ["ALL"]  # Allows autofix for all enabled rules.
 unfixable = []     # No rules are marked as unfixable.
+ignore = ["E402"]
 
 [tool.pyright]
 include = ["flip"]
