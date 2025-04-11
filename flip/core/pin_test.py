@@ -131,3 +131,12 @@ def test_propagate_through_pin() -> None:
     assert p2.value
     assert w2.value
     assert p3.value
+
+
+def test_path() -> None:
+    a = Component("a")
+    b = Component("b", parent=a)
+    p = Pin("p", component=b)
+    assert p.path == "a.b.p"
+
+    assert Pin("p").path == "p"

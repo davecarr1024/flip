@@ -95,6 +95,13 @@ class Component(Tickable, Validatable):
         return node
 
     @property
+    def path(self) -> str:
+        if self.parent is not None:
+            return self.parent.path + "." + self.name
+        else:
+            return self.name
+
+    @property
     def pins(self) -> frozenset["pin.Pin"]:
         return self.__pins
 
@@ -110,6 +117,20 @@ class Component(Tickable, Validatable):
                 for pin in removed_pins:
                     pin.component = None
 
+    @property
+    def pins_by_name(self) -> Mapping[str, "pin.Pin"]:
+        return {pin.name: pin for pin in self.pins}
+
+    def pin(self, name: str) -> "pin.Pin":
+        node = self
+        names = name.split(".")
+        for name in names[:-1]:
+            node = node.child(name)
+        try:
+            return node.pins_by_name[names[-1]]
+        except KeyError as e:
+            raise self._error(f"no pin named {name}", self.KeyError) from e
+
     @override
     def _validate(self) -> None:
         if self.parent is not None and self not in self.parent.children:
@@ -122,6 +143,31 @@ class Component(Tickable, Validatable):
             if pin_.component is not self:
                 raise self._validation_error(f"pin {pin_} not in component {self}")
             pin_.validate()
+
+        def _find_duplicates(names: Iterable[str]) -> list[str]:
+            seen = set[str]()
+            duplicates = set[str]()
+            for name in names:
+                if name in seen:
+                    duplicates.add(name)
+                seen.add(name)
+            return list(duplicates)
+
+        child_duplicates = _find_duplicates(child.name for child in self.children)
+        if child_duplicates:
+            raise self._validation_error(
+                f"duplicate children: {', '.join(child_duplicates)}"
+            )
+        pin_duplicates = _find_duplicates(pin_.name for pin_ in self.pins)
+        if pin_duplicates:
+            raise self._validation_error(f"duplicate pins: {', '.join(pin_duplicates)}")
+        duplicates = _find_duplicates(
+            [child.name for child in self.children] + [pin.name for pin in self.pins]
+        )
+        if duplicates:
+            raise self._validation_error(
+                f"duplicate pin + child names: {', '.join(duplicates)}"
+            )
 
     @property
     @override

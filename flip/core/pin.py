@@ -11,6 +11,7 @@ class Pin(Tickable, Validatable):
         component: Optional["component.Component"] = None,
         wires: Optional[Iterable["wire.Wire"]] = None,
         value: bool = False,
+        connect_to: Optional["Pin"] = None,
     ) -> None:
         Tickable.__init__(self)
         Validatable.__init__(self)
@@ -24,10 +25,19 @@ class Pin(Tickable, Validatable):
                 self.component = component
             if wires is not None:
                 self.wires = frozenset(wires)
+        if connect_to is not None:
+            self.connect_to(connect_to)
 
     @property
     def name(self) -> str:
         return self.__name
+
+    @property
+    def path(self) -> str:
+        if self.component is not None:
+            return self.component.path + "." + self.name
+        else:
+            return self.name
 
     @override
     def __eq__(self, rhs: object) -> bool:
@@ -101,6 +111,9 @@ class Pin(Tickable, Validatable):
             print(f"pin {self} sending value {self.value} to wire {wire_}")
             wire_.send(self.value)
         self.__pending_wires.clear()
+
+    def connect_to(self, pin: "Pin") -> "wire.Wire":
+        return wire.Wire([self, pin])
 
 
 from flip.core import component, wire

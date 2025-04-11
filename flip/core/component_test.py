@@ -161,3 +161,62 @@ def test_invalid_pins() -> None:
         p._pause_validation(),  # type:ignore
     ):
         p._Pin__component = None  # type:ignore
+
+
+def test_path() -> None:
+    a = Component("a")
+    b = Component("b", parent=a)
+    c = Component("c", parent=b)
+    assert a.path == "a"
+    assert b.path == "a.b"
+    assert c.path == "a.b.c"
+    assert a.child("b.c") is c
+    assert b.child("c") is c
+
+
+def test_get_pin() -> None:
+    p = Pin("pin")
+    c = Component("component", pins=[p])
+    assert c.pin("pin") is p
+
+
+def test_pins_by_name() -> None:
+    p1 = Pin("p1")
+    p2 = Pin("p2")
+    c = Component("c", pins=[p1, p2])
+    assert c.pins_by_name == {"p1": p1, "p2": p2}
+
+
+def test_get_pin_in_child() -> None:
+    p = Pin("p")
+    a = Component("a")
+    b = Component("b", parent=a, pins=[p])
+    assert a.pin("b.p") is p
+    assert b.pin("p") is p
+
+
+def test_pin_not_found() -> None:
+    c = Component("c")
+    with pytest.raises(Component.KeyError):
+        c.pin("p")
+
+
+def test_duplicate_child() -> None:
+    c1 = Component("c")
+    c2 = Component("c")
+    with pytest.raises(Component.ValidationError):
+        Component("p", children=[c1, c2])
+
+
+def test_duplicate_pin() -> None:
+    p1 = Pin("p")
+    p2 = Pin("p")
+    with pytest.raises(Component.ValidationError):
+        Component("c", pins=[p1, p2])
+
+
+def test_pin_and_child_with_same_name() -> None:
+    p = Pin("p")
+    c = Component("p")
+    with pytest.raises(Component.ValidationError):
+        Component("c", children=[c], pins=[p])
