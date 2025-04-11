@@ -22,7 +22,7 @@ def test_react(subtests: SubTests) -> None:
         with subtests.test(a=a, b=b, y=y):
             n = Nand()
             sim = Simulation([n])
-            n.a.value = a
-            n.b.value = b
+            n.a = a
+            n.b = b
             sim.run_for(1)
-            assert n.y.value == y
+            assert n.y == y
