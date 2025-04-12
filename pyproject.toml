@@ -59,6 +59,7 @@ typeCheckingMode = "strict"
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-s --capture=no -vv --cov=flip --cov-report=term-missing"
+# addopts = "-s --capture=no -vv flip/components/nand_test.py::test_nand"
 
 [tool.poe.tasks]
 format = "black ."

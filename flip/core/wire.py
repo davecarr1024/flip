@@ -48,7 +48,7 @@ class Wire(Tickable, Validatable):
         return id(self)
 
     @override
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         return f"Wire({', '.join(map(str, self.pins))})"
 
     @property
@@ -72,6 +72,9 @@ class Wire(Tickable, Validatable):
         for pin_ in self.pins:
             if self not in pin_.wires:
                 raise self._validation_error(f"pin {pin_} not in wire {self}")
+        roots = {pin_.root for pin_ in self.pins}
+        if len(roots) > 1:
+            raise self._validation_error(f"wire {self} has multiple roots {roots}")
 
     @property
     def next_value(self) -> bool:

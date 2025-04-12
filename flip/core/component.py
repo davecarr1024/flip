@@ -139,6 +139,10 @@ class Component(Tickable, Validatable):
         except KeyError as e:
             raise self._error(f"no pin named {name}", self.KeyError) from e
 
+    @property
+    def root(self) -> "Component":
+        return self.parent.root if self.parent is not None else self
+
     @override
     def _validate(self) -> None:
         if self.parent is not None and self not in self.parent.children:
@@ -146,10 +150,14 @@ class Component(Tickable, Validatable):
         for child in self.children:
             if child.parent is not self:
                 raise self._validation_error(f"child {child} not in parent {self}")
+            if child.root is not self.root:
+                raise self._validation_error(f"child {child} not in root {self.root}")
             child.validate()
         for pin_ in self.pins:
             if pin_.component is not self:
                 raise self._validation_error(f"pin {pin_} not in component {self}")
+            if pin_.root is not self.root:
+                raise self._validation_error(f"pin {pin_} not in root {self.root}")
             pin_.validate()
 
         def _find_duplicates(names: Iterable[str]) -> list[str]:

@@ -24,6 +24,11 @@ class Pin(Tickable, Validatable):
                 self.component = component
             if wires is not None:
                 self.wires = frozenset(wires)
+            self._mark_wires_pending()
+
+    def _mark_wires_pending(self) -> None:
+        print(f"pin {self} marking wires pending {self.wires}")
+        self.__pending_wires |= self.wires
 
     @property
     def name(self) -> str:
@@ -45,12 +50,16 @@ class Pin(Tickable, Validatable):
         return id(self)
 
     @override
-    def __str__(self) -> str:
-        return self.name
+    def __repr__(self) -> str:
+        return self.path
 
     @property
     def component(self) -> Optional["component.Component"]:
         return self.__component
+
+    @property
+    def root(self) -> Optional["component.Component"]:
+        return self.component.root if self.component is not None else None
 
     @component.setter
     def component(self, component: Optional["component.Component"]) -> None:
@@ -68,15 +77,23 @@ class Pin(Tickable, Validatable):
 
     @wires.setter
     def wires(self, wires: frozenset["wire.Wire"]) -> None:
-        if wires != self.__wires:
-            with self._pause_validation():
-                new_wires = wires - self.__wires
-                removed_wires = self.__wires - wires
-                self.__wires = wires
-                for wire in new_wires:
-                    wire.pins |= frozenset({self})
-                for wire in removed_wires:
-                    wire.pins -= frozenset({self})
+        print(f"pin {self} wires setter: {wires}")
+        if wires == self.__wires:
+            print("no diff")
+            return
+        with self._pause_validation():
+            new_wires = wires - self.__wires
+            removed_wires = self.__wires - wires
+            self.__wires = wires
+            if new_wires:
+                print(f"new wires: {new_wires}")
+            for wire in new_wires:
+                wire.pins |= frozenset({self})
+            if removed_wires:
+                print(f"removed wires: {removed_wires}")
+            for wire in removed_wires:
+                wire.pins -= frozenset({self})
+            self._mark_wires_pending()
 
     @override
     def _validate(self) -> None:
@@ -93,24 +110,29 @@ class Pin(Tickable, Validatable):
 
     @property
     def value(self) -> bool:
+        print(f"pin {self} value getter: {self.__value}")
         return self.__value
 
     @value.setter
     def value(self, value: bool) -> None:
+        print(f"pin {self} value setter: {value}")
         if value != self.__value:
             print(f"pin {self} value changed to {value}")
             self.__value = value
-            self.__pending_wires |= self.wires
+            self._mark_wires_pending()
 
     @override
     def _tick_send(self) -> None:
+        print(f"pin {self} _tick_send: pending_wires = {self.__pending_wires}")
         for wire_ in self.__pending_wires:
             print(f"pin {self} sending value {self.value} to wire {wire_}")
             wire_.send(self.value)
         self.__pending_wires.clear()
 
     def connect_to(self, pin: "Pin") -> "wire.Wire":
-        return wire.Wire([self, pin])
+        w = wire.Wire([self, pin])
+        self._mark_wires_pending()
+        return w
 
     def connected_pins(self) -> Iterable["Pin"]:
         seen = set[Pin]()

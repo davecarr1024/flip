@@ -17,6 +17,7 @@ class Nand(Component):
     @override
     def _tick_react(self) -> None:
         self.y.value = not (self.a.value and self.b.value)
+        print(f"Nand._tick_react: a={self.a.value}, b={self.b.value}, y={self.y.value}")
 
     @classmethod
     def create(

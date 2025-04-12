@@ -76,3 +76,12 @@ def test_propagate_to_pin() -> None:
 def test_invalid_timeout() -> None:
     with pytest.raises(Wire.ValidationError):
         Wire(value_timeout=-1)
+
+
+def test_multiple_roots() -> None:
+    c1 = Component("c1")
+    c2 = Component("c2")
+    p1 = Pin("p1", c1)
+    p2 = Pin("p2", c2)
+    with pytest.raises(Wire.ValidationError):
+        Wire([p1, p2])

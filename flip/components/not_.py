@@ -11,4 +11,17 @@ class Not(Component):
     ) -> None:
         super().__init__(name=name, parent=parent)
         self.a = Pin("a", self)
-        self.y = self.nand(self.a, self.a)
+        self.y = Pin("y", self)
+        self.y.connect_to(self.nand(self.a, self.a))
+
+    @classmethod
+    def create(
+        cls,
+        a: Pin,
+        /,
+        name: Optional[str] = None,
+        parent: Optional[Component] = None,
+    ) -> Pin:
+        not_ = cls(name=name, parent=parent)
+        a.connect_to(not_.a)
+        return not_.y

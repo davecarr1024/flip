@@ -251,3 +251,23 @@ def test_nand_invalid_pins() -> None:
     c = Component("c")
     with pytest.raises(Component.ValidationError):
         c.nand(a, b)
+
+
+def test_invalid_child_root() -> None:
+    class _Component(Component):
+        @property
+        def root(self) -> Component:
+            return self
+
+    with pytest.raises(Component.ValidationError):
+        Component("c", children=[_Component("d")])
+
+
+def test_invalid_pin_root() -> None:
+    class _Pin(Pin):
+        @property
+        def root(self) -> Component:
+            return Component("r")
+
+    with pytest.raises(Component.ValidationError):
+        Component("c", pins=[_Pin("p")])

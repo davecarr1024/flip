@@ -11,7 +11,7 @@ class Simulation(Component):
 
     def __init__(
         self,
-        children: Iterable[Component],
+        children: Optional[Iterable[Component]] = None,
         /,
         name: Optional[str] = None,
     ) -> None:
