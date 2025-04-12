@@ -67,6 +67,7 @@ typecheck = "pyright"
 test = "pytest"
 all = ["format", "lint", "typecheck", "test"]
 watch = "pyright --watch"
+dump = "./dump.sh"
 
 [tool.coverage.report]
 exclude_lines = [
