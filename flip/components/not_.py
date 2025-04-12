@@ -21,7 +21,6 @@ class Not(Component):
             b_connect_to=self.__a,
             y_connect_to=self.__y,
         )
-        self.pins = frozenset({self.__a, self.__y})
 
     @property
     def a(self) -> bool:

@@ -16,7 +16,6 @@ class Nand(Component):
         self.__a = Pin("a", self, connect_to=a_connect_to)
         self.__b = Pin("b", self, connect_to=b_connect_to)
         self.__y = Pin("y", self, connect_to=y_connect_to)
-        self.pins = frozenset({self.__a, self.__b, self.__y})
 
     @override
     def __str__(self) -> str:
