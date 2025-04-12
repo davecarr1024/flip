@@ -5,6 +5,8 @@ from flip.core.error import Error
 from flip.core.tickable import Tickable
 from flip.core.validatable import Validatable
 
+type Snapshot = Mapping[str, bool]
+
 
 class Component(Tickable, Validatable):
     class KeyError(Error, KeyError): ...
@@ -32,7 +34,13 @@ class Component(Tickable, Validatable):
 
     @override
     def __eq__(self, rhs: object) -> bool:
-        return self is rhs
+        match rhs:
+            case Component():
+                return self is rhs
+            case dict():
+                return self.snapshot() == rhs
+            case _:
+                raise TypeError(f"cannot compare {self} to {rhs}")
 
     @override
     def __hash__(self) -> int:
@@ -174,6 +182,15 @@ class Component(Tickable, Validatable):
     def _tickable_children(self) -> Iterable[Tickable]:
         yield from self.children
         yield from self.pins
+
+    def _snapshot(self, prefix: str) -> Snapshot:
+        snapshot = {f"{prefix}.{pin.name}": pin.value for pin in self.pins}
+        for child in self.children:
+            snapshot.update(child._snapshot(f"{prefix}.{child.name}"))
+        return snapshot
+
+    def snapshot(self) -> Snapshot:
+        return self._snapshot(self.name)
 
 
 from flip.core import pin

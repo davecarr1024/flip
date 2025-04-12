@@ -220,3 +220,26 @@ def test_pin_and_child_with_same_name() -> None:
     c = Component("p")
     with pytest.raises(Component.ValidationError):
         Component("c", children=[c], pins=[p])
+
+
+def test_snapshot() -> None:
+    p1 = Pin("p1", value=True)
+    c1 = Component("c1", pins=[p1])
+    p2 = Pin("p2", value=False)
+    c2 = Component("c2", parent=c1, pins=[p2])
+    assert c1.snapshot() == {"c1.p1": True, "c1.c2.p2": False}
+    assert c2.snapshot() == {"c2.p2": False}
+
+
+def test_eq_snapshot() -> None:
+    p = Pin("p")
+    c = Component("c", pins=[p])
+    snapshot = c.snapshot()
+    assert c == snapshot
+    p.value = True
+    assert c != snapshot
+
+
+def test_eq_invalid_type() -> None:
+    with pytest.raises(TypeError):
+        _ = Component("c") == 1

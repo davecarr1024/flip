@@ -1,4 +1,5 @@
 from .component import Component as Component
+from .component import Snapshot as Snapshot
 from .error import Error as Error
 from .errorable import Errorable as Errorable
 from .pin import Pin as Pin
