@@ -90,10 +90,10 @@ class Wire(Tickable, Validatable):
 
     def send(self, value: bool) -> None:
         if value != self.__value:
-            print(
-                f"wire {self} received value {value} "
-                f"and set timer to {self.__value_timeout}"
-            )
+            # print(
+            #     f"wire {self} received value {value} "
+            #     f"and set timer to {self.__value_timeout}"
+            # )
             self.__next_value = value
             self.__value_timer = self.__value_timeout
 
@@ -101,16 +101,16 @@ class Wire(Tickable, Validatable):
     def _tick_propagate(self) -> None:
         if self.__next_value != self.__value and self.__value_timer > 0:
             self.__value_timer -= 1
-            print(f"wire {self} timer is {self.__value_timer}")
+            # print(f"wire {self} timer is {self.__value_timer}")
             if self.__value_timer == 0:
-                print(f"wire {self} value changed to {self.__next_value}")
+                # print(f"wire {self} value changed to {self.__next_value}")
                 self.__value = self.__next_value
                 self.__pending_pins |= self.pins
 
     @override
     def _tick_receive(self) -> None:
         for pin_ in self.__pending_pins:
-            print(f"wire {self} sending value {self.__value} to pin {pin_}")
+            # print(f"wire {self} sending value {self.__value} to pin {pin_}")
             pin_.value = self.__value
         self.__pending_pins.clear()
 

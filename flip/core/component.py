@@ -47,8 +47,8 @@ class Component(Tickable, Validatable):
         return id(self)
 
     @override
-    def __str__(self) -> str:
-        return self.name
+    def __repr__(self) -> str:
+        return self.path
 
     @property
     def name(self) -> str:
@@ -209,12 +209,46 @@ class Component(Tickable, Validatable):
     ) -> "pin.Pin":
         from flip.components import Nand
 
-        if a not in self.pins or b not in self.pins:
-            raise self._error(
-                f"pins {a} and {b} not in component {self}",
-                self.ValidationError,
-            )
         return Nand.create(a, b, parent=self, name=name)
+
+    def not_(
+        self,
+        a: "pin.Pin",
+        /,
+        name: Optional[str] = None,
+    ) -> "pin.Pin":
+        from flip.components import Not
+
+        return Not.create(a, parent=self, name=name)
+
+    def and_(
+        self, a: "pin.Pin", b: "pin.Pin", /, name: Optional[str] = None
+    ) -> "pin.Pin":
+        from flip.components import And
+
+        return And.create(a, b, parent=self, name=name)
+
+    def or_(
+        self,
+        a: "pin.Pin",
+        b: "pin.Pin",
+        /,
+        name: Optional[str] = None,
+    ) -> "pin.Pin":
+        from flip.components import Or
+
+        return Or.create(a, b, parent=self, name=name)
+
+    def xor(
+        self,
+        a: "pin.Pin",
+        b: "pin.Pin",
+        /,
+        name: Optional[str] = None,
+    ) -> "pin.Pin":
+        from flip.components import Xor
+
+        return Xor.create(a, b, parent=self, name=name)
 
 
 from flip.core import pin

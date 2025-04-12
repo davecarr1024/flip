@@ -33,9 +33,6 @@ def test_nand(subtests: SubTests) -> None:
             c = Component("c", pins=[a_pin, b_pin])
             y_pin = Nand.create(a_pin, b_pin, parent=c)
             sim = Simulation([c])
-            print(f"a_pin.value = {a_pin.value}")
-            print(f"b_pin.value = {b_pin.value}")
-            print(f"y_pin.value = {y_pin.value}")
             nand = y_pin.component
             assert isinstance(nand, Nand)
             assert nand.parent is c
@@ -43,14 +40,9 @@ def test_nand(subtests: SubTests) -> None:
             assert set(nand.a.connected_pins()) == {a_pin, nand.a}
             assert set(nand.b.connected_pins()) == {b_pin, nand.b}
             assert set(nand.y.connected_pins()) == {y_pin, nand.y}
-            print("setting a and b...")
             a_pin.value = a
             b_pin.value = b
-            print("running simulation...")
             sim.run_until_stable()
-            print(f"a_pin.value = {a_pin.value}")
-            print(f"b_pin.value = {b_pin.value}")
-            print(f"y_pin.value = {y_pin.value}")
             assert nand.a.value == a
             assert nand.b.value == b
             assert y_pin.value == y

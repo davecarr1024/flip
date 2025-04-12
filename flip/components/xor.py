@@ -1,9 +1,9 @@
-from typing import Optional, override
+from typing import Optional
 
 from flip.core import Component, Pin
 
 
-class Nand(Component):
+class Xor(Component):
     def __init__(
         self,
         name: Optional[str] = None,
@@ -14,11 +14,13 @@ class Nand(Component):
         self.b = Pin("b", self)
         self.y = Pin("y", self)
 
-    @override
-    def _tick_react(self) -> None:
-        self.y.value = not (self.a.value and self.b.value)
-        # print(f"Nand._tick_react: a={self.a.value},
-        # b={self.b.value}, y={self.y.value}")
+        # (a | b) & !(a & b)
+        or_ = self.or_(self.a, self.b, name="a | b")
+        and_ = self.and_(self.a, self.b, name="a & b")
+        not_and = self.not_(and_, name="!(a & b)")
+        xor = self.and_(or_, not_and, name="(a | b) & !(a & b)")
+
+        self.y.connect_to(xor)
 
     @classmethod
     def create(

@@ -27,7 +27,7 @@ class Pin(Tickable, Validatable):
             self._mark_wires_pending()
 
     def _mark_wires_pending(self) -> None:
-        print(f"pin {self} marking wires pending {self.wires}")
+        # print(f"pin {self} marking wires pending {self.wires}")
         self.__pending_wires |= self.wires
 
     @property
@@ -77,20 +77,20 @@ class Pin(Tickable, Validatable):
 
     @wires.setter
     def wires(self, wires: frozenset["wire.Wire"]) -> None:
-        print(f"pin {self} wires setter: {wires}")
+        # print(f"pin {self} wires setter: {wires}")
         if wires == self.__wires:
-            print("no diff")
+            # print("no diff")
             return
         with self._pause_validation():
             new_wires = wires - self.__wires
             removed_wires = self.__wires - wires
             self.__wires = wires
-            if new_wires:
-                print(f"new wires: {new_wires}")
+            # if new_wires:
+            # print(f"new wires: {new_wires}")
             for wire in new_wires:
                 wire.pins |= frozenset({self})
-            if removed_wires:
-                print(f"removed wires: {removed_wires}")
+            # if removed_wires:
+            # print(f"removed wires: {removed_wires}")
             for wire in removed_wires:
                 wire.pins -= frozenset({self})
             self._mark_wires_pending()
@@ -110,22 +110,22 @@ class Pin(Tickable, Validatable):
 
     @property
     def value(self) -> bool:
-        print(f"pin {self} value getter: {self.__value}")
+        # print(f"pin {self} value getter: {self.__value}")
         return self.__value
 
     @value.setter
     def value(self, value: bool) -> None:
-        print(f"pin {self} value setter: {value}")
+        # print(f"pin {self} value setter: {value}")
         if value != self.__value:
-            print(f"pin {self} value changed to {value}")
+            # print(f"pin {self} value changed to {value}")
             self.__value = value
             self._mark_wires_pending()
 
     @override
     def _tick_send(self) -> None:
-        print(f"pin {self} _tick_send: pending_wires = {self.__pending_wires}")
+        # print(f"pin {self} _tick_send: pending_wires = {self.__pending_wires}")
         for wire_ in self.__pending_wires:
-            print(f"pin {self} sending value {self.value} to wire {wire_}")
+            # print(f"pin {self} sending value {self.value} to wire {wire_}")
             wire_.send(self.value)
         self.__pending_wires.clear()
 
