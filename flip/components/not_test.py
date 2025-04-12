@@ -14,7 +14,7 @@ def test_not(subtests: SubTests) -> None:
         with subtests.test(a=a, y=y):
             n = Not()
             sim = Simulation([n])
-            n.a = a
-            assert n.a == a
-            sim.run_for(100)
-            assert n.y == y
+            n.a.value = a
+            assert n.a.value == a
+            sim.run_until_stable()
+            assert n.y.value == y

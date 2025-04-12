@@ -243,3 +243,11 @@ def test_eq_snapshot() -> None:
 def test_eq_invalid_type() -> None:
     with pytest.raises(TypeError):
         _ = Component("c") == 1
+
+
+def test_nand_invalid_pins() -> None:
+    a = Pin("a")
+    b = Pin("b")
+    c = Component("c")
+    with pytest.raises(Component.ValidationError):
+        c.nand(a, b)

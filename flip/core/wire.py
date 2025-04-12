@@ -96,7 +96,6 @@ class Wire(Tickable, Validatable):
 
     @override
     def _tick_propagate(self) -> None:
-        self.__value_changed = False
         if self.__next_value != self.__value and self.__value_timer > 0:
             self.__value_timer -= 1
             print(f"wire {self} timer is {self.__value_timer}")

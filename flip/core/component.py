@@ -192,5 +192,21 @@ class Component(Tickable, Validatable):
     def snapshot(self) -> Snapshot:
         return self._snapshot(self.name)
 
+    def nand(
+        self,
+        a: "pin.Pin",
+        b: "pin.Pin",
+        /,
+        name: Optional[str] = None,
+    ) -> "pin.Pin":
+        from flip.components import Nand
+
+        if a not in self.pins or b not in self.pins:
+            raise self._error(
+                f"pins {a} and {b} not in component {self}",
+                self.ValidationError,
+            )
+        return Nand.create(a, b, parent=self, name=name)
+
 
 from flip.core import pin
