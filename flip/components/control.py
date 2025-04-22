@@ -12,6 +12,10 @@ class Control(component.Component):
         super().__init__(name=name, parent=parent)
         self.__value = False
 
+    @override
+    def _str_line(self) -> str:
+        return f"Control(name={self.name}, value={self.value})"
+
     @property
     def value(self) -> bool:
         return self.__value
@@ -24,3 +28,8 @@ class Control(component.Component):
     @override
     def controls(self) -> frozenset["Control"]:
         return frozenset({self})
+
+    @override
+    def tick_clear(self) -> None:
+        super().tick_clear()
+        self.value = False

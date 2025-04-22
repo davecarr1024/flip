@@ -149,6 +149,7 @@ def test_tick() -> None:
             self.tick_control_called = False
             self.tick_write_called = False
             self.tick_read_called = False
+            self.tick_process_called = False
             self.tick_clear_called = False
 
         @override
@@ -164,6 +165,10 @@ def test_tick() -> None:
             self.tick_read_called = True
 
         @override
+        def tick_process(self) -> None:
+            self.tick_process_called = True
+
+        @override
         def tick_clear(self) -> None:
             self.tick_clear_called = True
 
@@ -172,9 +177,11 @@ def test_tick() -> None:
     assert not t.tick_control_called
     assert not t.tick_write_called
     assert not t.tick_read_called
+    assert not t.tick_process_called
     assert not t.tick_clear_called
     p.tick()
     assert t.tick_control_called
     assert t.tick_write_called
     assert t.tick_read_called
+    assert t.tick_process_called
     assert t.tick_clear_called

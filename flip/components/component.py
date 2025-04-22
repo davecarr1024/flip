@@ -151,6 +151,10 @@ class Component(Validatable):
         for child in self.children:
             child.tick_read()
 
+    def tick_process(self) -> None:
+        for child in self.children:
+            child.tick_process()
+
     def tick_clear(self) -> None:
         for child in self.children:
             child.tick_clear()
@@ -160,6 +164,7 @@ class Component(Validatable):
         self.tick_control()
         self.tick_write()
         self.tick_read()
+        self.tick_process()
         self.tick_clear()
 
 

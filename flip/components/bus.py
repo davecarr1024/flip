@@ -18,6 +18,10 @@ class Bus(component.Component):
         self.__value: Optional[int] = None
         self.__setter: Optional[str] = None
 
+    @override
+    def _str_line(self) -> str:
+        return f"Bus(name={self.name}, value={self.value}, setter={self.setter})"
+
     @property
     def value(self) -> Optional[int]:
         return self.__value
