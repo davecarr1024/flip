@@ -122,6 +122,8 @@ class Component(Validatable):
             raise self._validation_error(
                 f"Parent {self.__parent} does not contain child {self}."
             )
+        if len(self.__children) != len({child.name for child in self.__children}):
+            raise self._validation_error("duplicate child names.")
         for child in self.__children:
             if child.__parent is not self:
                 raise self._validation_error(
@@ -138,6 +140,16 @@ class Component(Validatable):
     @property
     def controls_by_path(self) -> Mapping[str, "control.Control"]:
         return {control.path: control for control in self.controls}
+
+    @property
+    def statuses(self) -> frozenset["status.Status"]:
+        return frozenset[status.Status]().union(
+            *[child.statuses for child in self.children]
+        )
+
+    @property
+    def statuses_by_path(self) -> Mapping[str, "status.Status"]:
+        return {status.path: status for status in self.statuses}
 
     def tick_control(self) -> None:
         for child in self.children:
@@ -168,4 +180,4 @@ class Component(Validatable):
         self.tick_clear()
 
 
-from flip.components import control
+from flip.components import control, status

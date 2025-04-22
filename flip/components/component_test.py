@@ -185,3 +185,10 @@ def test_tick() -> None:
     assert t.tick_read_called
     assert t.tick_process_called
     assert t.tick_clear_called
+
+
+def test_duplicate_child_names() -> None:
+    c1 = Component(name="c")
+    c2 = Component(name="c")
+    with pytest.raises(Component.ValidationError):
+        Component(name="p", children=[c1, c2])
