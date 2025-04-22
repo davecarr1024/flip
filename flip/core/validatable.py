@@ -32,11 +32,13 @@ class Validatable(ABC, Errorable):
         if self._validation_enabled:
             self._validate()
 
+    @final
     def _validation_error(self, message: str) -> "Validatable.ValidationError":
         return self._error(message, self.ValidationError)
 
     @abstractmethod
     def _validate(self) -> None: ...
 
+    @final
     def validate(self) -> None:
         self._validate_if_enabled()

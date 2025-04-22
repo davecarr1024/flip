@@ -48,3 +48,8 @@ def test_invalid_operation() -> None:
     with pytest.raises(_Validatable.ValidationError) as excinfo:
         v.invalid_operation()
     assert str(excinfo.value) == "test: invalid"
+
+
+def test_validate() -> None:
+    v = _Validatable("test")
+    v.validate()
