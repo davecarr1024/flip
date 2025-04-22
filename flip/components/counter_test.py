@@ -12,19 +12,19 @@ def test_idle() -> None:
 def test_increment() -> None:
     bus = Bus(name="bus")
     counter = Counter(name="counter", bus=bus, parent=bus)
-    counter.enable_increment = True
+    counter.increment_enable = True
     assert counter.value == 0
     bus.tick()
     assert counter.value == 1
-    assert not counter.enable_increment
+    assert not counter.increment_enable
 
 
 def test_reset() -> None:
     bus = Bus(name="bus")
     counter = Counter(name="counter", bus=bus, parent=bus)
-    counter.enable_reset = True
+    counter.reset_enable = True
     counter.value = 1
     assert counter.value == 1
     bus.tick()
     assert counter.value == 0
-    assert not counter.enable_reset
+    assert not counter.reset_enable

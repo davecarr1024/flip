@@ -14,29 +14,29 @@ class Counter(Register):
         parent: Optional[component.Component] = None,
     ) -> None:
         super().__init__(name=name, bus=bus, parent=parent)
-        self.__enable_increment = Control(name="enable_increment", parent=self)
-        self.__enable_reset = Control(name="enable_reset", parent=self)
+        self.__increment_enable = Control(name="increment_enable", parent=self)
+        self.__reset_enable = Control(name="reset_enable", parent=self)
 
     @property
-    def enable_increment(self) -> bool:
-        return self.__enable_increment.value
+    def increment_enable(self) -> bool:
+        return self.__increment_enable.value
 
-    @enable_increment.setter
-    def enable_increment(self, value: bool) -> None:
-        self.__enable_increment.value = value
+    @increment_enable.setter
+    def increment_enable(self, value: bool) -> None:
+        self.__increment_enable.value = value
 
     @property
-    def enable_reset(self) -> bool:
-        return self.__enable_reset.value
+    def reset_enable(self) -> bool:
+        return self.__reset_enable.value
 
-    @enable_reset.setter
-    def enable_reset(self, value: bool) -> None:
-        self.__enable_reset.value = value
+    @reset_enable.setter
+    def reset_enable(self, value: bool) -> None:
+        self.__reset_enable.value = value
 
     @override
     def tick_process(self) -> None:
         super().tick_process()
-        if self.enable_reset:
+        if self.reset_enable:
             self.value = 0
-        if self.enable_increment:
+        if self.increment_enable:
             self.value += 1
