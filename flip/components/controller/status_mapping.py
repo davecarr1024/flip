@@ -1,6 +1,5 @@
 from typing import Iterator, Mapping, override
 
-from flip.components.controller.address_set import AddressSet
 from flip.components.controller.instruction_set import InstructionSet
 from flip.core import Error, Errorable
 
@@ -38,24 +37,11 @@ class StatusMapping(Mapping[str, int], Errorable):
         except KeyError as e:
             raise self._error(f"Status {status} not found.", self.KeyError) from e
 
-    def partial_status_addresses(
-        self, partial_status: Mapping[str, bool]
-    ) -> AddressSet:
-        addresses = AddressSet()
-        for status in reversed(sorted(self.keys())):
-            if status in partial_status:
-                addresses = addresses.with_bit(partial_status[status])
-            else:
-                addresses = addresses.with_bits([False, True])
-        return addresses
-
-    def status_address(self, statuses: Mapping[str, bool]) -> int:
+    def encode_address(self, statuses: Mapping[str, bool]) -> int:
         address = 0
         for status, value in statuses.items():
             address |= int(value) << self[status]
         return address
 
-    def decode_status_bits(self, status_bits: int) -> Mapping[str, bool]:
-        return {
-            status: bool(status_bits & (1 << index)) for status, index in self.items()
-        }
+    def decode_address(self, address: int) -> Mapping[str, bool]:
+        return {status: bool(address & (1 << index)) for status, index in self.items()}

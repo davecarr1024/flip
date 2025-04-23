@@ -1,9 +1,8 @@
+import math
 from typing import Iterable, Mapping
 
 from flip.bytes import Byte
-from flip.components.controller.address_set import AddressSet
 from flip.components.controller.control_mapping import ControlMapping
-from flip.components.controller.instruction import Instruction
 from flip.components.controller.instruction_set import InstructionSet
 from flip.components.controller.status_mapping import StatusMapping
 
@@ -13,13 +12,17 @@ class InstructionMemoryFormat:
         self.__controls = ControlMapping(instruction_set)
         self.__statuses = StatusMapping(instruction_set)
         self.__num_status_bits = len(self.__statuses)
-        self.__num_step_index_bits = AddressSet.num_bits_for_values(
-            len(instruction) for instruction in instruction_set
+        self.__num_step_index_bits = math.ceil(
+            math.log2(
+                max(
+                    [
+                        len(instruction.steps)
+                        for instruction in instruction_set.instructions
+                    ]
+                )
+            )
         )
         self.__num_opcode_bits = 8
-
-    def _status_addresses(self, instruction: Instruction) -> AddressSet:
-        return self.__statuses.partial_status_addresses(instruction.statuses)
 
     def encode_address(
         self,
@@ -30,16 +33,14 @@ class InstructionMemoryFormat:
         return (
             opcode.unsigned_value
             << (self.__num_status_bits + self.__num_step_index_bits)
-            | self.__statuses.status_address(statuses) << self.__num_step_index_bits
+            | self.__statuses.encode_address(statuses) << self.__num_step_index_bits
             | step_index.unsigned_value
         )
 
-    def decode_address(self, address: int) -> tuple[Byte, Mapping[str, bool], int]:
+    def decode_address(self, address: int) -> tuple[Byte, Mapping[str, bool], Byte]:
         opcode = Byte(address >> (self.__num_status_bits + self.__num_step_index_bits))
-        statuses = self.__statuses.decode_status_bits(
-            address >> self.__num_step_index_bits
-        )
-        step_index = address & ((1 << self.__num_step_index_bits) - 1)
+        statuses = self.__statuses.decode_address(address >> self.__num_step_index_bits)
+        step_index = Byte(address & ((1 << self.__num_step_index_bits) - 1))
         return opcode, statuses, step_index
 
     def encode_controls(self, controls: Iterable[str]) -> int:

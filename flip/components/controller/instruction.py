@@ -1,40 +1,38 @@
 from dataclasses import dataclass
-from typing import Iterable, Iterator, Mapping, Sized, override
+from typing import Iterable, Mapping
 
 from flip.bytes import Byte
 from flip.components.controller.step import Step
 
 
 @dataclass(frozen=True)
-class Instruction(Sized, Iterable[Step]):
+class Instruction:
+    @dataclass(frozen=True)
+    class StatusEntry:
+        name: str
+        value: bool
+
     opcode: Byte
-    statuses: Mapping[str, bool]
-    _steps: list[Step]
-
-    @override
-    def __len__(self) -> int:
-        return len(self.steps)
-
-    @override
-    def __iter__(self) -> Iterator[Step]:
-        yield from self.steps
+    _statuses: frozenset[StatusEntry]
+    steps: tuple[Step, ...]
 
     @classmethod
-    def _preamble(cls) -> list[Step]:
-        raise NotImplementedError()
-
-    @classmethod
-    def _last_step_required_controls(cls) -> frozenset[str]:
-        raise NotImplementedError()
+    def create(
+        cls, opcode: Byte, statuses: Mapping[str, bool], steps: Iterable[Step]
+    ) -> "Instruction":
+        return cls(
+            opcode=opcode,
+            _statuses=frozenset(
+                cls.StatusEntry(name, value) for name, value in statuses.items()
+            ),
+            steps=tuple(steps),
+        )
 
     @property
-    def steps(self) -> list[Step]:
-        steps = self._preamble() + self._steps
-        if steps:
-            steps[-1] = steps[-1].with_controls(self._last_step_required_controls())
-        return steps
+    def statuses(self) -> Mapping[str, bool]:
+        return {entry.name: entry.value for entry in self._statuses}
 
     @property
     def controls(self) -> frozenset[str]:
         """The set of all controls used by this instruction."""
-        return frozenset[str]().union(*self.steps)
+        return frozenset[str]().union(*[step.controls for step in self.steps])
