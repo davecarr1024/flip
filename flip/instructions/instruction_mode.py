@@ -48,3 +48,13 @@ class InstructionMode(Sized, Iterable[InstructionImpl]):
 
     def with_footer(self, steps: Iterable[Step]) -> "InstructionMode":
         return self._with_impls(impl.with_footer(steps) for impl in self._impls)
+
+    @property
+    def controls(self) -> frozenset[str]:
+        """The set of all controls used by any impl of this mode."""
+        return frozenset[str]().union(*[impl.controls for impl in self])
+
+    @property
+    def statuses(self) -> frozenset[str]:
+        """The set of all statuses used by any impl of this mode."""
+        return frozenset[str]().union(*[impl.statuses.keys() for impl in self])

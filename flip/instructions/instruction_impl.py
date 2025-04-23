@@ -58,3 +58,8 @@ class InstructionImpl(Sized, Iterable[Step]):
     @override
     def __iter__(self) -> Iterator[Step]:
         return iter(self._steps)
+
+    @property
+    def controls(self) -> frozenset[str]:
+        """The set of all controls in the steps of this impl."""
+        return frozenset[str]().union(*self._steps)

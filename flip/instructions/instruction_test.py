@@ -16,7 +16,7 @@ im1 = InstructionMode.create(
             steps={Step.create({"c1", "c2"}), Step.create({"c2", "c3"})},
         ),
         InstructionImpl.create(
-            statuses={"a": False, "b": True},
+            statuses={"c": False, "d": True},
             steps={Step.create({"c3", "c4"}), Step.create({"c4", "c5"})},
         ),
     },
@@ -26,6 +26,7 @@ im2 = InstructionMode.create(
     opcode=Byte(0x02),
     impls={
         InstructionImpl.create(
+            statuses={"e": True, "f": False},
             steps={Step.create({"c5", "c6"}), Step.create({"c6", "c7"})},
         ),
     },
@@ -52,9 +53,57 @@ def test_create_empty() -> None:
     assert set(Instruction.create(name="i")) == set()
 
 
+def test_ctor_empty() -> None:
+    assert set(Instruction(name="i")) == set()
+
+
 def test_with_modes() -> None:
     assert set(i.with_modes({im3})) == {im1, im2, im3}
 
 
 def test_with_mode() -> None:
     assert set(i.with_mode(im3)) == {im1, im2, im3}
+
+
+def test_with_header() -> None:
+    s1 = Step().with_control("ch1")
+    s2 = Step().with_control("ch2")
+    assert set(i.with_header({s1, s2})) == {
+        im.with_header({s1, s2}) for im in {im1, im2}
+    }
+
+
+def test_with_footer() -> None:
+    s1 = Step().with_control("cf1")
+    s2 = Step().with_control("cf2")
+    assert set(i.with_footer({s1, s2})) == {
+        im.with_footer({s1, s2}) for im in {im1, im2}
+    }
+
+
+def test_create_simple() -> None:
+    s1 = Step.create({"c1", "c2"})
+    s2 = Step.create({"c2", "c3"})
+    i = Instruction.create_simple(
+        name="i",
+        mode=AddressingMode.IMMEDIATE,
+        opcode=Byte(0x01),
+        steps=[s1, s2],
+    )
+    assert i.name == "i"
+    assert len(i) == 1
+    im = next(iter(i))
+    assert im.mode == AddressingMode.IMMEDIATE
+    assert im.opcode == Byte(0x01)
+    assert len(im) == 1
+    ii = next(iter(im))
+    assert ii.statuses == {}
+    assert list(ii) == [s1, s2]
+
+
+def test_controls() -> None:
+    assert i.controls == {"c1", "c2", "c3", "c4", "c5", "c6", "c7"}
+
+
+def test_statuses() -> None:
+    assert i.statuses == {"a", "b", "c", "d", "e", "f"}

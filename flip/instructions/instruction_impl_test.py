@@ -43,3 +43,7 @@ def test_with_footer() -> None:
 
 def test_with_step() -> None:
     assert list(ii.with_step(s3)) == [s1, s2, s3]
+
+
+def test_controls() -> None:
+    assert ii.controls == {"c1", "c2", "c3"}
