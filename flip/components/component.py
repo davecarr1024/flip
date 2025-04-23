@@ -63,9 +63,12 @@ class Component(Validatable):
 
     @property
     def path(self) -> str:
-        if parent := self.parent:
-            return f"{parent.path}.{self.name}"
-        return self.name
+        if self.parent is None:
+            return ""
+        elif self.parent.path == "":
+            return self.name
+        else:
+            return f"{self.parent.path}.{self.name}"
 
     @property
     def parent(self) -> Optional["Component"]:

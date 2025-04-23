@@ -12,7 +12,7 @@ def test_ctor() -> None:
     assert ram.name == "r"
     assert ram.parent is p
     assert p.children == {ram}
-    assert ram.path == "p.r"
+    assert ram.path == "r"
     assert ram[Word(0x0000)] == Byte(0x00)
     assert ram[Word(0x0001)] == Byte(0x01)
     assert len(ram) == 2

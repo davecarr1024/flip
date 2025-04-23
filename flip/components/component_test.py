@@ -51,9 +51,9 @@ def test_path() -> None:
     g = Component(name="g")
     p = Component(name="p", parent=g)
     c = Component(name="c", parent=p)
-    assert c.path == "g.p.c"
-    assert p.path == "g.p"
-    assert g.path == "g"
+    assert c.path == "p.c"
+    assert p.path == "p"
+    assert g.path == ""
 
 
 def test_children_by_name() -> None:

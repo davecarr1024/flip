@@ -10,7 +10,7 @@ def test_ctor() -> None:
     assert rom.name == "r"
     assert rom.parent is p
     assert p.children == {rom}
-    assert rom.path == "p.r"
+    assert rom.path == "r"
     assert rom[Word(0x0000)] == Byte(0x00)
     assert rom[Word(0x0001)] == Byte(0x01)
     assert len(rom) == 2

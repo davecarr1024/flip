@@ -22,7 +22,7 @@ def test_controls() -> None:
 def test_controls_by_path() -> None:
     p = Component(name="p")
     c = Control(name="c", parent=p)
-    assert p.controls_by_path == {"p.c": c}
+    assert p.controls_by_path == {"c": c}
 
 
 def test_set_value() -> None:
@@ -43,4 +43,4 @@ def test_aggregate_controls() -> None:
     assert g.controls == {c1, c2}
     assert p1.controls == {c1}
     assert p2.controls == {c2}
-    assert g.controls_by_path == {"g.p1.c1": c1, "g.p2.c2": c2}
+    assert g.controls_by_path == {"p1.c1": c1, "p2.c2": c2}

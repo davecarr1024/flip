@@ -1,5 +1,6 @@
 from typing import Optional, override
 
+from flip.bytes import Byte
 from flip.components import component
 from flip.components.bus import Bus
 from flip.components.control import Control
@@ -18,48 +19,48 @@ class Register(component.Component):
     ) -> None:
         super().__init__(name=name, parent=parent)
         self.__bus = bus
-        self.__value: int = 0
-        self.__write_enable = Control(name="write_enable", parent=self)
-        self.__read_enable = Control(name="read_enable", parent=self)
+        self.__value = Byte(0)
+        self.__write = Control(name="write", parent=self)
+        self.__read = Control(name="read", parent=self)
 
     @property
     def bus(self) -> Bus:
         return self.__bus
 
     @property
-    def value(self) -> int:
+    def value(self) -> Byte:
         return self.__value
 
     @value.setter
-    def value(self, value: int) -> None:
+    def value(self, value: Byte) -> None:
         self.__value = value
 
     @property
-    def write_enable(self) -> bool:
-        return self.__write_enable.value
+    def write(self) -> bool:
+        return self.__write.value
 
-    @write_enable.setter
-    def write_enable(self, value: bool) -> None:
-        self.__write_enable.value = value
+    @write.setter
+    def write(self, value: bool) -> None:
+        self.__write.value = value
 
     @property
-    def read_enable(self) -> bool:
-        return self.__read_enable.value
+    def read(self) -> bool:
+        return self.__read.value
 
-    @read_enable.setter
-    def read_enable(self, value: bool) -> None:
-        self.__read_enable.value = value
+    @read.setter
+    def read(self, value: bool) -> None:
+        self.__read.value = value
 
     @override
     def tick_write(self) -> None:
         super().tick_write()
-        if self.write_enable:
+        if self.write:
             self.bus.set(self.value, self)
 
     @override
     def tick_read(self) -> None:
         super().tick_read()
-        if self.read_enable:
+        if self.read:
             if (value := self.bus.value) is None:
                 raise self._error(f"Reading open bus on {self.path}.", self.ReadError)
             self.value = value

@@ -8,9 +8,9 @@ def test_ctor() -> None:
     assert s.parent is p
     assert p.children == {s}
     assert p.statuses == {s}
-    assert p.statuses_by_path == {"p.s": s}
+    assert p.statuses_by_path == {"s": s}
     assert s.statuses == {s}
-    assert s.statuses_by_path == {"p.s": s}
+    assert s.statuses_by_path == {"s": s}
     assert s.value is False
 
 
