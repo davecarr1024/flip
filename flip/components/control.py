@@ -30,6 +30,5 @@ class Control(component.Component):
         return frozenset({self})
 
     @override
-    def tick_clear(self) -> None:
-        super().tick_clear()
+    def _tick_clear(self) -> None:
         self.value = False

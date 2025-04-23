@@ -43,7 +43,6 @@ class Bus(component.Component):
         self.__setter = setter
 
     @override
-    def tick_clear(self) -> None:
-        super().tick_clear()
+    def _tick_clear(self) -> None:
         self.__value = None
         self.__setter = None

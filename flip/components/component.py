@@ -154,25 +154,45 @@ class Component(Validatable):
     def statuses_by_path(self) -> Mapping[str, "status.Status"]:
         return {status.path: status for status in self.statuses}
 
+    @final
     def tick_control(self) -> None:
+        self._tick_control()
         for child in self.children:
             child.tick_control()
 
+    def _tick_control(self) -> None: ...
+
+    @final
     def tick_write(self) -> None:
+        self._tick_write()
         for child in self.children:
             child.tick_write()
 
+    def _tick_write(self) -> None: ...
+
+    @final
     def tick_read(self) -> None:
+        self._tick_read()
         for child in self.children:
             child.tick_read()
 
+    def _tick_read(self) -> None: ...
+
+    @final
     def tick_process(self) -> None:
+        self._tick_process()
         for child in self.children:
             child.tick_process()
 
+    def _tick_process(self) -> None: ...
+
+    @final
     def tick_clear(self) -> None:
+        self._tick_clear()
         for child in self.children:
             child.tick_clear()
+
+    def _tick_clear(self) -> None: ...
 
     @final
     def tick(self) -> None:

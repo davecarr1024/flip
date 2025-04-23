@@ -29,8 +29,7 @@ class Controller(Component):
         ).assemble()
 
     @override
-    def tick_control(self) -> None:
-        super().tick_control()
+    def _tick_control(self) -> None:
         print(f"\n{self.path}.tick_control()")
         opcode = self.__instruction_buffer.value
         print(f"  opcode = {opcode}")
@@ -46,7 +45,5 @@ class Controller(Component):
         print(f"  controls = {controls}")
         for control in self.root.controls:
             control.value = control.path in controls
-            if control.value:
-                print(f"  enable {control.path}")
         self.__step_counter.increment = True
         print(f"/{self.path}.tick_control()\n")

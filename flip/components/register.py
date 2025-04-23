@@ -52,17 +52,13 @@ class Register(component.Component):
         self.__read.value = value
 
     @override
-    def tick_write(self) -> None:
-        super().tick_write()
-        print(f"{self.path} tick_write: {self.write}")
+    def _tick_write(self) -> None:
         if self.write:
             print(f"{self.path} writing {self.value} to bus")
             self.bus.set(self.value, self)
 
     @override
-    def tick_read(self) -> None:
-        super().tick_read()
-        print(f"{self.path} tick_read: {self.read}")
+    def _tick_read(self) -> None:
         if self.read:
             if (value := self.bus.value) is None:
                 raise self._error(f"Reading open bus on {self.path}.", self.ReadError)

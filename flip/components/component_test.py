@@ -153,23 +153,23 @@ def test_tick() -> None:
             self.tick_clear_called = False
 
         @override
-        def tick_control(self) -> None:
+        def _tick_control(self) -> None:
             self.tick_control_called = True
 
         @override
-        def tick_write(self) -> None:
+        def _tick_write(self) -> None:
             self.tick_write_called = True
 
         @override
-        def tick_read(self) -> None:
+        def _tick_read(self) -> None:
             self.tick_read_called = True
 
         @override
-        def tick_process(self) -> None:
+        def _tick_process(self) -> None:
             self.tick_process_called = True
 
         @override
-        def tick_clear(self) -> None:
+        def _tick_clear(self) -> None:
             self.tick_clear_called = True
 
     t = Tickable()
