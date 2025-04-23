@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from contextlib import contextmanager
-from typing import Iterable, Iterator, Optional, final, override
+from typing import Iterable, Iterator, Optional, Type, final, override
 
 from flip.core import Error, Validatable
 
@@ -36,7 +36,7 @@ class Component(Validatable):
 
     @override
     def __repr__(self) -> str:
-        return str(self)
+        return self.path
 
     @override
     @final
@@ -228,6 +228,10 @@ class Component(Validatable):
         for tabs, context in enumerate(self.__log_context):
             print(f'{"  " * tabs}{context}')
         print(f'{"  "*len(self.__log_context)}{message}')
+
+    @override
+    def _error[E: Error](self, message: str, type: Type[E] = Error) -> E:
+        return super()._error(message=f"{self.path}: {message}", type=type)
 
 
 from flip.components import control, status

@@ -1,11 +1,18 @@
 from typing import Optional, override
 
-from flip.components import Bus, Component, Counter, Register
+from flip.components.bus import Bus
+from flip.components.component import Component
 from flip.components.controller.assembler import Assembler
 from flip.components.controller.instruction_set import InstructionSet
+from flip.components.counter import Counter
+from flip.components.register import Register
 
 
 class Controller(Component):
+    class Error(Component.Error): ...
+
+    class KeyError(Error, Component.KeyError, KeyError): ...
+
     def __init__(
         self,
         instruction_set: InstructionSet,
@@ -33,17 +40,22 @@ class Controller(Component):
         opcode = self.__instruction_buffer.value
         statuses = {status.path: status.value for status in self.root.statuses}
         step_index = self.__step_counter.value
-        controls = self.__instruction_memory.get(
+        control_paths = self.__instruction_memory.get(
             opcode=opcode,
             statuses=statuses,
             step_index=step_index,
         )
+        for control_path in control_paths:
+            if control_path not in self.root.controls_by_path:
+                raise self._error(
+                    f"Control {control_path} not found in root controls.", self.KeyError
+                )
         for control in self.root.controls:
-            control.value = control.path in controls
+            control.value = control.path in control_paths
         self.__step_counter.increment = True
         self._log(
             f"opcode = {opcode}, "
             f"statuses = {statuses}, "
             f"step_index = {step_index}, "
-            f"controls = {controls}"
+            f"controls = {control_paths}"
         )

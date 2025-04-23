@@ -8,9 +8,11 @@ class Control(component.Component):
         self,
         name: str,
         parent: Optional[component.Component] = None,
+        auto_clear: bool = True,
     ) -> None:
         super().__init__(name=name, parent=parent)
         self.__value = False
+        self.__auto_clear = auto_clear
 
     @override
     def _str_line(self) -> str:
@@ -22,6 +24,8 @@ class Control(component.Component):
 
     @value.setter
     def value(self, value: bool) -> None:
+        # if value != self.__value:
+        #     self._log(f"setting value to {value}")
         self.__value = value
 
     @property
@@ -31,4 +35,5 @@ class Control(component.Component):
 
     @override
     def _tick_clear(self) -> None:
-        self.value = False
+        if self.__auto_clear:
+            self.value = False

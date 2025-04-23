@@ -14,6 +14,7 @@ imf = InstructionMemoryFormat(
     instruction_set=InstructionSet.create(
         instructions={
             Instruction.create(
+                name="i1",
                 opcode=Byte(0),
                 statuses={"s1": False, "s2": True},
                 steps=[
@@ -22,6 +23,7 @@ imf = InstructionMemoryFormat(
                 ],
             ),
             Instruction.create(
+                name="i2",
                 opcode=Byte(1),
                 statuses={"s2": True, "s3": False},
                 steps=[

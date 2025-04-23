@@ -1,5 +1,3 @@
-from typing import override
-
 import pytest
 
 from flip.core.error import Error
@@ -8,13 +6,6 @@ from flip.core.errorable import Errorable
 
 class _Errorable(Errorable):
     class ValueError(Error): ...
-
-    def __init__(self, name: str) -> None:
-        self.name = name
-
-    @override
-    def __str__(self) -> str:
-        return self.name
 
     def set(self, value: int) -> int:
         if value < 0:
@@ -26,19 +17,19 @@ class _Errorable(Errorable):
 
 
 def test_throw() -> None:
-    e = _Errorable("test")
+    e = _Errorable()
     with pytest.raises(_Errorable.ValueError) as excinfo:
         e.set(-1)
-    assert str(excinfo.value) == "test: value must be non-negative"
+    assert str(excinfo.value) == "value must be non-negative"
 
 
 def test_try_success() -> None:
-    e = _Errorable("test")
+    e = _Errorable()
     assert e.try_set(1) == 1
 
 
 def test_try_fail() -> None:
-    e = _Errorable("test")
+    e = _Errorable()
     with pytest.raises(_Errorable.ValueError) as excinfo:
         e.try_set(-1)
-    assert str(excinfo.value) == "test: set failed"
+    assert str(excinfo.value) == "set failed"

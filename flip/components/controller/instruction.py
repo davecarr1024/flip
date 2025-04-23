@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import Iterable, Mapping
+from dataclasses import dataclass, replace
+from typing import Iterable, Mapping, Optional, Self
 
 from flip.bytes import Byte
 from flip.components.controller.step import Step
@@ -12,18 +12,37 @@ class Instruction:
         name: str
         value: bool
 
+    name: str
     opcode: Byte
     _statuses: frozenset[StatusEntry]
     steps: tuple[Step, ...]
 
+    def with_steps(self, steps: Iterable[Step]) -> Self:
+        return replace(self, steps=tuple(steps))
+
+    def with_header(self, header: Iterable[Step]) -> Self:
+        return self.with_steps(tuple(header) + self.steps)
+
+    def with_footer(self, footer: Iterable[Step]) -> Self:
+        return self.with_steps(self.steps + tuple(footer))
+
     @classmethod
     def create(
-        cls, opcode: Byte, statuses: Mapping[str, bool], steps: Iterable[Step]
+        cls,
+        name: str,
+        opcode: Byte,
+        steps: Iterable[Step],
+        statuses: Optional[Mapping[str, bool]] = None,
     ) -> "Instruction":
         return cls(
+            name=name,
             opcode=opcode,
-            _statuses=frozenset(
-                cls.StatusEntry(name, value) for name, value in statuses.items()
+            _statuses=(
+                frozenset(
+                    cls.StatusEntry(name, value) for name, value in statuses.items()
+                )
+                if statuses is not None
+                else frozenset()
             ),
             steps=tuple(steps),
         )

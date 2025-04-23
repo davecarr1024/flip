@@ -1,0 +1,68 @@
+from flip.bytes import Byte, Word
+from flip.components import MinimalComputer
+
+
+def test_halt() -> None:
+    computer = MinimalComputer()
+    computer.memory[Word(0)] = Byte(0x01)
+    assert not computer.halt
+    computer.tick_until_halt()
+    assert computer.halt
+    assert computer.program_counter.value == Word(1)
+
+
+def test_set_halt() -> None:
+    computer = MinimalComputer()
+    computer.halt = True
+    assert computer.halt
+    computer.tick_until_halt()
+    assert computer.halt
+    assert computer.program_counter.value == Word(0)
+
+
+def test_nop_and_halt() -> None:
+    computer = MinimalComputer()
+    computer.memory[Word(0)] = Byte(0x00)
+    computer.memory[Word(1)] = Byte(0x01)
+    computer.tick_until_halt()
+    assert computer.program_counter.value == Word(2)
+
+
+def test_tax() -> None:
+    computer = MinimalComputer()
+    computer.memory[Word(0)] = Byte(0x02)
+    computer.memory[Word(1)] = Byte(0x01)
+    computer.a.value = Byte(0x03)
+    computer.tick_until_halt()
+    assert computer.program_counter.value == Word(2)
+    assert computer.x.value == Byte(0x03)
+
+
+def test_txa() -> None:
+    computer = MinimalComputer()
+    computer.memory[Word(0)] = Byte(0x03)
+    computer.memory[Word(1)] = Byte(0x01)
+    computer.x.value = Byte(0x03)
+    computer.tick_until_halt()
+    assert computer.program_counter.value == Word(2)
+    assert computer.a.value == Byte(0x03)
+
+
+def test_tay() -> None:
+    computer = MinimalComputer()
+    computer.memory[Word(0)] = Byte(0x04)
+    computer.memory[Word(1)] = Byte(0x01)
+    computer.a.value = Byte(0x03)
+    computer.tick_until_halt()
+    assert computer.program_counter.value == Word(2)
+    assert computer.y.value == Byte(0x03)
+
+
+def test_tya() -> None:
+    computer = MinimalComputer()
+    computer.memory[Word(0)] = Byte(0x05)
+    computer.memory[Word(1)] = Byte(0x01)
+    computer.y.value = Byte(0x03)
+    computer.tick_until_halt()
+    assert computer.program_counter.value == Word(2)
+    assert computer.a.value == Byte(0x03)

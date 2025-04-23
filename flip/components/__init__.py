@@ -1,8 +1,10 @@
 from .bus import Bus as Bus
 from .component import Component as Component
+from .computer import Computer as Computer
 from .control import Control as Control
 from .counter import Counter as Counter
 from .memory import Memory as Memory
+from .minimal_computer import MinimalComputer as MinimalComputer
 from .program_counter import ProgramCounter as ProgramCounter
 from .register import Register as Register
 from .status import Status as Status

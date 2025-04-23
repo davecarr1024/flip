@@ -6,9 +6,8 @@ from flip.core.validatable import Validatable
 
 
 class _Validatable(Validatable):
-    def __init__(self, name: str) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self.name = name
         self.__valid = True
 
     @property
@@ -25,10 +24,6 @@ class _Validatable(Validatable):
         if not self.valid:
             raise self._validation_error("invalid")
 
-    @override
-    def __str__(self) -> str:
-        return self.name
-
     def valid_operation(self) -> None:
         with self._pause_validation():
             self.valid = False
@@ -39,17 +34,17 @@ class _Validatable(Validatable):
 
 
 def test_valid_operation() -> None:
-    v = _Validatable("test")
+    v = _Validatable()
     v.valid_operation()
 
 
 def test_invalid_operation() -> None:
-    v = _Validatable("test")
+    v = _Validatable()
     with pytest.raises(_Validatable.ValidationError) as excinfo:
         v.invalid_operation()
-    assert str(excinfo.value) == "test: invalid"
+    assert str(excinfo.value) == "invalid"
 
 
 def test_validate() -> None:
-    v = _Validatable("test")
+    v = _Validatable()
     v.validate()

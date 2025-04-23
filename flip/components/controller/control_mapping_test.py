@@ -7,11 +7,13 @@ def test_mapping() -> None:
         InstructionSet.create(
             instructions={
                 Instruction.create(
+                    name="i1",
                     opcode=Byte(0),
                     statuses={},
                     steps=[Step.create(controls={"A", "B"})],
                 ),
                 Instruction.create(
+                    name="i2",
                     opcode=Byte(1),
                     statuses={},
                     steps=[Step.create(controls={"B", "C"})],
@@ -32,11 +34,13 @@ def test_encode_value() -> None:
         InstructionSet.create(
             instructions={
                 Instruction.create(
+                    name="i1",
                     opcode=Byte(0),
                     statuses={},
                     steps=[Step.create(controls={"A", "B"})],
                 ),
                 Instruction.create(
+                    name="i2",
                     opcode=Byte(1),
                     statuses={},
                     steps=[Step.create(controls={"B", "C"})],
@@ -52,11 +56,13 @@ def test_decode_value() -> None:
         InstructionSet.create(
             instructions={
                 Instruction.create(
+                    name="i1",
                     opcode=Byte(0),
                     statuses={},
                     steps=[Step.create(controls={"A", "B"})],
                 ),
                 Instruction.create(
+                    name="i2",
                     opcode=Byte(1),
                     statuses={},
                     steps=[Step.create(controls={"B", "C"})],
