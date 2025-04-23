@@ -37,8 +37,11 @@ class Counter(Register):
     @override
     def tick_process(self) -> None:
         super().tick_process()
+        print(f"\n{self.path} tick_process()")
         if self.increment:
             self.value = self.value.add(Byte(1)).value
+            print(f"  {self.path} incremented to {self.value}")
         if self.reset:
             self.value = Byte(0)
-        
+            print(f"  {self.path} reset to {self.value}")
+        print(f"/{self.path} tick_process()\n")
