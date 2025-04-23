@@ -15,6 +15,10 @@ class Word:
     def __hash__(self) -> int:
         return hash(self.__value)
 
+    @override
+    def __repr__(self) -> str:
+        return f"Word(0x{self.__value:04X})"
+
     def to_bytes(self) -> tuple[Byte, Byte]:
         return (
             Byte(self.__value & 0xFF),
