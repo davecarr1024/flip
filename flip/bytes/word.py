@@ -24,3 +24,7 @@ class Word:
     @classmethod
     def from_bytes(cls, low: Byte, high: Byte) -> "Word":
         return cls((high.unsigned_value << 8) | low.unsigned_value)
+
+    @property
+    def value(self) -> int:
+        return self.__value

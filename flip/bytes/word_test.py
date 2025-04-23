@@ -16,6 +16,10 @@ def test_ctor_mod(subtests: SubTests) -> None:
             assert Word(value) == expected
 
 
+def test_get_value() -> None:
+    assert Word(0x1234).value == 0x1234
+
+
 def test_eq() -> None:
     w = Word(0x0001)
     assert w == Word(0x0001)

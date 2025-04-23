@@ -200,14 +200,17 @@ class Component(Validatable):
 
     def _tick_clear(self) -> None: ...
 
-    @final
-    def tick(self) -> None:
+    def __tick(self) -> None:
         with self._log_context("tick"):
             self.tick_control()
             self.tick_write()
             self.tick_read()
             self.tick_process()
             self.tick_clear()
+
+    @final
+    def tick(self) -> None:
+        self.root.__tick()
 
     __log_context = list[str]()
 
