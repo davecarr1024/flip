@@ -30,20 +30,20 @@ class Controller(Component):
 
     @override
     def _tick_control(self) -> None:
-        print(f"\n{self.path}.tick_control()")
         opcode = self.__instruction_buffer.value
-        print(f"  opcode = {opcode}")
         statuses = {status.path: status.value for status in self.root.statuses}
-        print(f"  statuses = {statuses}")
         step_index = self.__step_counter.value
-        print(f"  step_index = {step_index}")
         controls = self.__instruction_memory.get(
             opcode=opcode,
             statuses=statuses,
             step_index=step_index,
         )
-        print(f"  controls = {controls}")
         for control in self.root.controls:
             control.value = control.path in controls
         self.__step_counter.increment = True
-        print(f"/{self.path}.tick_control()\n")
+        self._log(
+            f"opcode = {opcode}, "
+            f"statuses = {statuses}, "
+            f"step_index = {step_index}, "
+            f"controls = {controls}"
+        )

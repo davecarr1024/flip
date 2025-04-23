@@ -54,7 +54,7 @@ class Register(component.Component):
     @override
     def _tick_write(self) -> None:
         if self.write:
-            print(f"{self.path} writing {self.value} to bus")
+            self._log(f"writing {self.value} to bus")
             self.bus.set(self.value, self)
 
     @override
@@ -62,5 +62,5 @@ class Register(component.Component):
         if self.read:
             if (value := self.bus.value) is None:
                 raise self._error(f"Reading open bus on {self.path}.", self.ReadError)
-            print(f"{self.path} reading {value} from bus")
+            self._log(f"reading {value} from bus")
             self.value = value

@@ -38,7 +38,7 @@ class Counter(Register):
     def _tick_process(self) -> None:
         if self.reset:
             self.value = Byte(0)
-            print(f"{self.path} reset to {self.value}")
+            self._log(f"reset to {self.value}")
         elif self.increment:
             self.value = self.value.add(Byte(1)).value
-            print(f"{self.path} incremented to {self.value}")
+            self._log(f"incremented to {self.value}")

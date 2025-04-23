@@ -1,5 +1,6 @@
 from collections.abc import Mapping
-from typing import Iterable, Optional, final, override
+from contextlib import contextmanager
+from typing import Iterable, Iterator, Optional, final, override
 
 from flip.core import Error, Validatable
 
@@ -156,51 +157,74 @@ class Component(Validatable):
 
     @final
     def tick_control(self) -> None:
-        self._tick_control()
-        for child in self.children:
-            child.tick_control()
+        with self._log_context("tick_control"):
+            self._tick_control()
+            for child in self.children:
+                child.tick_control()
 
     def _tick_control(self) -> None: ...
 
     @final
     def tick_write(self) -> None:
-        self._tick_write()
-        for child in self.children:
-            child.tick_write()
+        with self._log_context("tick_write"):
+            self._tick_write()
+            for child in self.children:
+                child.tick_write()
 
     def _tick_write(self) -> None: ...
 
     @final
     def tick_read(self) -> None:
-        self._tick_read()
-        for child in self.children:
-            child.tick_read()
+        with self._log_context("tick_read"):
+            self._tick_read()
+            for child in self.children:
+                child.tick_read()
 
     def _tick_read(self) -> None: ...
 
     @final
     def tick_process(self) -> None:
-        self._tick_process()
-        for child in self.children:
-            child.tick_process()
+        with self._log_context("tick_process"):
+            self._tick_process()
+            for child in self.children:
+                child.tick_process()
 
     def _tick_process(self) -> None: ...
 
     @final
     def tick_clear(self) -> None:
-        self._tick_clear()
-        for child in self.children:
-            child.tick_clear()
+        with self._log_context("tick_clear"):
+            self._tick_clear()
+            for child in self.children:
+                child.tick_clear()
 
     def _tick_clear(self) -> None: ...
 
     @final
     def tick(self) -> None:
-        self.tick_control()
-        self.tick_write()
-        self.tick_read()
-        self.tick_process()
-        self.tick_clear()
+        with self._log_context("tick"):
+            self.tick_control()
+            self.tick_write()
+            self.tick_read()
+            self.tick_process()
+            self.tick_clear()
+
+    __log_context = list[str]()
+
+    @final
+    @contextmanager
+    def _log_context(self, message: str) -> Iterator[None]:
+        try:
+            self.__log_context.append(f"{self.path}.{message}")
+            yield
+        finally:
+            self.__log_context.pop()
+
+    @final
+    def _log(self, message: str) -> None:
+        for tabs, context in enumerate(self.__log_context):
+            print(f'{"  " * tabs}{context}')
+        print(f'{"  "*len(self.__log_context)}{message}')
 
 
 from flip.components import control, status
