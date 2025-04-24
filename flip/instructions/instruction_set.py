@@ -43,14 +43,30 @@ class InstructionSet(Sized, Iterable[Instruction]):
     def with_instruction(self, instruction: Instruction) -> "InstructionSet":
         return self._with_instructions(self._instructions | {instruction})
 
-    def with_header(self, steps: Iterable[Step]) -> "InstructionSet":
+    @staticmethod
+    def _normalize_step(step: Step | list[str] | str) -> Step:
+        match step:
+            case Step():
+                return step
+            case list():
+                return Step.create(controls=step)
+            case str():
+                return Step.create(controls=[step])
+
+    @staticmethod
+    def _normalize_steps(steps: Iterable[Step | list[str] | str]) -> list[Step]:
+        return list(map(InstructionSet._normalize_step, steps))
+
+    def with_header(self, *steps: Step | list[str] | str) -> "InstructionSet":
         return self._with_instructions(
-            instruction.with_header(steps) for instruction in self._instructions
+            instruction.with_header(self._normalize_steps(steps))
+            for instruction in self._instructions
         )
 
-    def with_footer(self, steps: Iterable[Step]) -> "InstructionSet":
+    def with_footer(self, *steps: Step | list[str] | str) -> "InstructionSet":
         return self._with_instructions(
-            instruction.with_footer(steps) for instruction in self._instructions
+            instruction.with_footer(self._normalize_steps(steps))
+            for instruction in self._instructions
         )
 
     @property

@@ -1,3 +1,5 @@
+import pytest
+
 from flip.bytes import Byte
 from flip.instructions import AddressingMode, InstructionImpl, InstructionMode, Step
 
@@ -68,3 +70,10 @@ def test_statuses() -> None:
 
 def test_max_num_steps() -> None:
     assert im.max_num_steps == 2
+
+
+def test_max_num_steps_empty() -> None:
+    with pytest.raises(InstructionMode.ValueError):
+        _ = InstructionMode.create(
+            mode=AddressingMode.IMMEDIATE, opcode=Byte(0x01)
+        ).max_num_steps

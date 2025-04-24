@@ -101,13 +101,13 @@ def test_with_instruction() -> None:
 def test_with_header() -> None:
     s1 = Step().with_control("ch1")
     s2 = Step().with_control("ch2")
-    assert set(is_.with_header({s1, s2})) == {i.with_header({s1, s2}) for i in {i1, i2}}
+    assert set(is_.with_header(s1, s2)) == {i.with_header([s1, s2]) for i in {i1, i2}}
 
 
 def test_with_footer() -> None:
     s1 = Step().with_control("cf1")
     s2 = Step().with_control("cf2")
-    assert set(is_.with_footer({s1, s2})) == {i.with_footer({s1, s2}) for i in {i1, i2}}
+    assert set(is_.with_footer(s1, s2)) == {i.with_footer([s1, s2]) for i in {i1, i2}}
 
 
 def test_controls() -> None:

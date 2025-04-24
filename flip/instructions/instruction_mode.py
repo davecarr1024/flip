@@ -2,13 +2,18 @@ from dataclasses import dataclass, replace
 from typing import Iterable, Iterator, Optional, Sized, override
 
 from flip.bytes import Byte
+from flip.core import Error, Errorable
 from flip.instructions.addressing_mode import AddressingMode
 from flip.instructions.instruction_impl import InstructionImpl
 from flip.instructions.step import Step
 
 
 @dataclass(frozen=True)
-class InstructionMode(Sized, Iterable[InstructionImpl]):
+class InstructionMode(Errorable, Sized, Iterable[InstructionImpl]):
+    class Error(Error): ...
+
+    class ValueError(Error, ValueError): ...
+
     mode: AddressingMode
     opcode: Byte
     _impls: frozenset[InstructionImpl]
@@ -61,4 +66,9 @@ class InstructionMode(Sized, Iterable[InstructionImpl]):
 
     @property
     def max_num_steps(self) -> int:
+        if not self._impls:
+            raise self._error(
+                f"No implementations defined for mode {self}",
+                self.ValueError,
+            )
         return max(map(len, self))

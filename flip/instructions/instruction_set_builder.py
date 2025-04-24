@@ -83,14 +83,24 @@ class InstructionSetBuilder(Errorable):
             _impl=None,
         )
 
-    def instruction(self, name: str) -> "InstructionSetBuilder":
+    def instruction(
+        self,
+        name: str,
+        opcode: Byte | int | None = None,
+    ) -> "InstructionSetBuilder":
         is_ = self._collapse_instruction()
-        return InstructionSetBuilder(
+        is_ = InstructionSetBuilder(
             _instruction_set=is_._instruction_set,
             _instruction=Instruction.create(name=name),
             _mode=None,
             _impl=None,
         )
+        match opcode:
+            case int() | Byte():
+                is_ = is_.mode("none", opcode)
+            case None:
+                pass
+        return is_
 
     def mode(
         self,
