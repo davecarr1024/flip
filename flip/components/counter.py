@@ -16,7 +16,6 @@ class Counter(Register):
     ) -> None:
         super().__init__(name=name, bus=bus, parent=parent)
         self.__increment = Control(name="increment", parent=self)
-        self.__reset = Control(name="reset", parent=self)
 
     @property
     def increment(self) -> bool:
@@ -25,14 +24,6 @@ class Counter(Register):
     @increment.setter
     def increment(self, value: bool) -> None:
         self.__increment.value = value
-
-    @property
-    def reset(self) -> bool:
-        return self.__reset.value
-
-    @reset.setter
-    def reset(self, value: bool) -> None:
-        self.__reset.value = value
 
     @override
     def _tick_process(self) -> None:

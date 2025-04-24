@@ -28,7 +28,7 @@ class InstructionMemory(component.Component):
             return self.__data[address]
         except KeyError as e:
             raise self._error(
-                f"Address {address} {address:b} not found.", self.KeyError
+                f"Address {address} {address:X} {address:b} not found.", self.KeyError
             ) from e
 
     def get(
@@ -37,12 +37,18 @@ class InstructionMemory(component.Component):
         statuses: Mapping[str, bool],
         step_index: Byte,
     ) -> frozenset[str]:
-        return self.__format.decode_controls(
-            self._get(
-                self.__format.encode_address(
-                    opcode,
-                    statuses,
-                    step_index,
+        try:
+            return self.__format.decode_controls(
+                self._get(
+                    self.__format.encode_address(
+                        opcode,
+                        statuses,
+                        step_index,
+                    ),
                 ),
-            ),
-        )
+            )
+        except self.KeyError as e:
+            raise self._error(
+                f"Unable to get controls for {opcode=}, {statuses=}, {step_index=}.",
+                self.KeyError,
+            ) from e

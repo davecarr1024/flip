@@ -25,6 +25,7 @@ class Memory(Component, MutableMapping[Word, Byte]):
         self.__bus = bus
         self.__write = Control(name="write", parent=self)
         self.__read = Control(name="read", parent=self)
+        self.__high_reset = Control(name="high_reset", parent=self)
         self.__address_low = Register(name="address_low", bus=bus, parent=self)
         self.__address_high = Register(name="address_high", bus=bus, parent=self)
         self.__data: MutableMapping[Word, Byte] = (

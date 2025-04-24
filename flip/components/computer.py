@@ -7,6 +7,7 @@ from flip.components.controller.controller import Controller
 from flip.components.memory import Memory
 from flip.components.program_counter import ProgramCounter
 from flip.components.register import Register
+from flip.components.word_register import WordRegister
 from flip.instructions import InstructionSet
 
 
@@ -45,6 +46,9 @@ class Computer(Component):
 
     def _create_register(self, name: str) -> Register:
         return Register(name=name, bus=self.__bus, parent=self)
+
+    def _create_word_register(self, name: str) -> WordRegister:
+        return WordRegister(name=name, bus=self.__bus, parent=self)
 
     @property
     def memory(self) -> Memory:

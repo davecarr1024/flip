@@ -62,3 +62,13 @@ def test_write_and_read() -> None:
     r2.read = True
     bus.tick()
     assert r2.value == Byte(1)
+
+
+def test_reset() -> None:
+    bus = Bus()
+    reg = Register(name="reg", bus=bus, parent=bus)
+    reg.value = Byte(1)
+    assert reg.value == Byte(1)
+    reg.reset = True
+    reg.tick()
+    assert reg.value == Byte(0)

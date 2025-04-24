@@ -22,6 +22,7 @@ class Register(component.Component):
         self.__value = Byte(0)
         self.__write = Control(name="write", parent=self)
         self.__read = Control(name="read", parent=self)
+        self.__reset = Control(name="reset", parent=self)
 
     @property
     def bus(self) -> Bus:
@@ -51,6 +52,14 @@ class Register(component.Component):
     def read(self, value: bool) -> None:
         self.__read.value = value
 
+    @property
+    def reset(self) -> bool:
+        return self.__reset.value
+
+    @reset.setter
+    def reset(self, value: bool) -> None:
+        self.__reset.value = value
+
     @override
     def _tick_write(self) -> None:
         if self.write:
@@ -64,3 +73,9 @@ class Register(component.Component):
                 raise self._error(f"Reading open bus on {self.path}.", self.ReadError)
             self._log(f"reading {value} from bus")
             self.value = value
+
+    @override
+    def _tick_process(self) -> None:
+        if self.reset:
+            self.value = Byte(0)
+            self._log(f"reset to {self.value}")

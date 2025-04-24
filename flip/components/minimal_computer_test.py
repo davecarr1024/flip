@@ -76,3 +76,27 @@ def test_lda_immediate() -> None:
     computer.tick_until_halt()
     assert computer.program_counter.value == Word(3)
     assert computer.a.value == Byte(0x03)
+
+
+def test_lda_absolute() -> None:
+    computer = MinimalComputer()
+    computer.memory[Word(0)] = Byte(0x07)
+    computer.memory[Word(1)] = Byte(0xEF)
+    computer.memory[Word(2)] = Byte(0xBE)
+    computer.memory[Word(3)] = Byte(0x01)
+    computer.memory[Word(0xBEEF)] = Byte(0xAB)
+    computer.tick_until_halt()
+    assert computer.program_counter.value == Word(4)
+    assert computer.a.value == Byte(0xAB)
+
+
+def test_lda_zero_page() -> None:
+    computer = MinimalComputer()
+    computer.memory[Word(0x0100)] = Byte(0x08)
+    computer.memory[Word(0x0101)] = Byte(0x12)
+    computer.memory[Word(0x0102)] = Byte(0x01)
+    computer.memory[Word(0x0012)] = Byte(0xCD)
+    computer.program_counter.value = Word(0x0100)
+    computer.tick_until_halt()
+    assert computer.program_counter.value == Word(0x0103)
+    assert computer.a.value == Byte(0xCD)
