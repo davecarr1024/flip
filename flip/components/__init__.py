@@ -8,3 +8,4 @@ from .minimal_computer import MinimalComputer as MinimalComputer
 from .program_counter import ProgramCounter as ProgramCounter
 from .register import Register as Register
 from .status import Status as Status
+from .word_register import WordRegister as WordRegister
