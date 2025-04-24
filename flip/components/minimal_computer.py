@@ -55,7 +55,8 @@ class MinimalComputer(Computer):
             return impl
 
         def load_word_at_pc(
-            to: str, buffer: str = "arg_buffer.low",
+            to: str,
+            buffer: str = "arg_buffer.low",
         ) -> Callable[[InstructionSetBuilder], InstructionSetBuilder]:
             """Copy the next two bytes at pc to a word register."""
 

@@ -100,3 +100,13 @@ def test_lda_zero_page() -> None:
     computer.tick_until_halt()
     assert computer.program_counter.value == Word(0x0103)
     assert computer.a.value == Byte(0xCD)
+
+
+def test_jmp_absolute() -> None:
+    computer = MinimalComputer()
+    computer.memory[Word(0)] = Byte(0x20)
+    computer.memory[Word(1)] = Byte(0xEF)
+    computer.memory[Word(2)] = Byte(0xBE)
+    computer.memory[Word(0xBEEF)] = Byte(0x01)
+    computer.tick_until_halt()
+    assert computer.program_counter.value == Word(0xBEF0)
