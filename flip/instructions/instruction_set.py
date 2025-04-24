@@ -67,3 +67,10 @@ class InstructionSet(Sized, Iterable[Instruction]):
     def max_num_steps(self) -> int:
         """The maximum number of steps in any instruction in the set."""
         return max(instruction.max_num_steps for instruction in self)
+
+    @staticmethod
+    def builder() -> "instruction_set_builder.InstructionSetBuilder":
+        return instruction_set_builder.InstructionSetBuilder()
+
+
+from flip.instructions import instruction_set_builder
