@@ -27,6 +27,21 @@ class MinimalComputer(Computer):
                 .step("a.write", "y.read")
                 .instruction("tya", 0x05)
                 .step("y.write", "a.read")
+                .instruction("lda")
+                .mode("immediate", 0x06)
+                .step(
+                    "program_counter.low.write",
+                    "memory.address_low.read",
+                )
+                .step(
+                    "program_counter.high.write",
+                    "memory.address_high.read",
+                )
+                .step(
+                    "memory.write",
+                    "a.read",
+                    "program_counter.increment",
+                )
                 .build()
             )
             .with_header(

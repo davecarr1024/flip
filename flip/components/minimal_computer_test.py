@@ -66,3 +66,13 @@ def test_tya() -> None:
     computer.tick_until_halt()
     assert computer.program_counter.value == Word(2)
     assert computer.a.value == Byte(0x03)
+
+
+def test_lda_immediate() -> None:
+    computer = MinimalComputer()
+    computer.memory[Word(0)] = Byte(0x06)
+    computer.memory[Word(1)] = Byte(0x03)
+    computer.memory[Word(2)] = Byte(0x01)
+    computer.tick_until_halt()
+    assert computer.program_counter.value == Word(3)
+    assert computer.a.value == Byte(0x03)
