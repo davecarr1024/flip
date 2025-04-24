@@ -3,10 +3,8 @@ from typing import Iterable, Optional
 from flip.bytes import Byte
 from flip.components.component import Component
 from flip.components.computer import Computer
-from flip.components.controller.instruction import Instruction
-from flip.components.controller.instruction_set import InstructionSet
-from flip.components.controller.step import Step
 from flip.components.register import Register
+from flip.instructions import AddressingMode, Instruction, InstructionSet, Step
 
 
 class MinimalComputer(Computer):
@@ -20,41 +18,47 @@ class MinimalComputer(Computer):
             children=children,
             instruction_set=InstructionSet.create(
                 instructions={
-                    Instruction.create(
+                    Instruction.create_simple(
                         name="nop",
+                        mode=AddressingMode.NONE,
                         opcode=Byte(0x00),
                         steps=[],
                     ),
-                    Instruction.create(
+                    Instruction.create_simple(
                         name="hlt",
+                        mode=AddressingMode.NONE,
                         opcode=Byte(0x01),
                         steps=[
                             Step.create({"halt"}),
                         ],
                     ),
-                    Instruction.create(
+                    Instruction.create_simple(
                         name="tax",
+                        mode=AddressingMode.NONE,
                         opcode=Byte(0x02),
                         steps=[
                             Step.create(["a.write", "x.read"]),
                         ],
                     ),
-                    Instruction.create(
+                    Instruction.create_simple(
                         name="txa",
+                        mode=AddressingMode.NONE,
                         opcode=Byte(0x03),
                         steps=[
                             Step.create(["x.write", "a.read"]),
                         ],
                     ),
-                    Instruction.create(
+                    Instruction.create_simple(
                         name="tay",
+                        mode=AddressingMode.NONE,
                         opcode=Byte(0x04),
                         steps=[
                             Step.create(["a.write", "y.read"]),
                         ],
                     ),
-                    Instruction.create(
+                    Instruction.create_simple(
                         name="tya",
+                        mode=AddressingMode.NONE,
                         opcode=Byte(0x05),
                         steps=[
                             Step.create(["y.write", "a.read"]),

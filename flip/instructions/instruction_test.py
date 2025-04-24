@@ -13,11 +13,18 @@ im1 = InstructionMode.create(
     impls={
         InstructionImpl.create(
             statuses={"a": True, "b": False},
-            steps={Step.create({"c1", "c2"}), Step.create({"c2", "c3"})},
+            steps=[
+                Step.create({"c1", "c2"}),
+                Step.create({"c2", "c3"}),
+            ],
         ),
         InstructionImpl.create(
             statuses={"c": False, "d": True},
-            steps={Step.create({"c3", "c4"}), Step.create({"c4", "c5"})},
+            steps=[
+                Step.create({"c3", "c4"}),
+                Step.create({"c4", "c5"}),
+                Step.create({"c3", "c4"}),
+            ],
         ),
     },
 )
@@ -27,7 +34,10 @@ im2 = InstructionMode.create(
     impls={
         InstructionImpl.create(
             statuses={"e": True, "f": False},
-            steps={Step.create({"c5", "c6"}), Step.create({"c6", "c7"})},
+            steps=[
+                Step.create({"c5", "c6"}),
+                Step.create({"c6", "c7"}),
+            ],
         ),
     },
 )
@@ -107,3 +117,7 @@ def test_controls() -> None:
 
 def test_statuses() -> None:
     assert i.statuses == {"a", "b", "c", "d", "e", "f"}
+
+
+def test_max_num_steps() -> None:
+    assert i.max_num_steps == 3

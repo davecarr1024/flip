@@ -3,8 +3,8 @@ from typing import Iterable, Mapping
 
 from flip.bytes import Byte
 from flip.components.controller.control_mapping import ControlMapping
-from flip.components.controller.instruction_set import InstructionSet
 from flip.components.controller.status_mapping import StatusMapping
+from flip.instructions import InstructionSet
 
 
 class InstructionMemoryFormat:
@@ -12,16 +12,7 @@ class InstructionMemoryFormat:
         self.__controls = ControlMapping(instruction_set)
         self.__statuses = StatusMapping(instruction_set)
         self.__num_status_bits = len(self.__statuses)
-        self.__num_step_index_bits = math.ceil(
-            math.log2(
-                max(
-                    [
-                        len(instruction.steps)
-                        for instruction in instruction_set.instructions
-                    ]
-                )
-            )
-        )
+        self.__num_step_index_bits = math.ceil(math.log2(instruction_set.max_num_steps))
         self.__num_opcode_bits = 8
 
     def encode_address(

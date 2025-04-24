@@ -1,7 +1,10 @@
 from flip.bytes import Byte
-from flip.components.controller import (
+from flip.components.controller import InstructionMemoryFormat
+from flip.instructions import (
+    AddressingMode,
     Instruction,
-    InstructionMemoryFormat,
+    InstructionImpl,
+    InstructionMode,
     InstructionSet,
     Step,
 )
@@ -10,22 +13,29 @@ imf = InstructionMemoryFormat(
     instruction_set=InstructionSet.create(
         instructions={
             Instruction.create(
-                name="i1",
-                opcode=Byte(0),
-                statuses={"s1": False, "s2": True},
-                steps=[
-                    Step.create(controls={"c1", "c2"}),
-                    Step.create(controls={"c2", "c3"}),
-                ],
-            ),
-            Instruction.create(
-                name="i2",
-                opcode=Byte(1),
-                statuses={"s2": True, "s3": False},
-                steps=[
-                    Step.create(controls={"c3", "c4"}),
-                    Step.create(controls={"c4", "c5"}),
-                ],
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.IMMEDIATE,
+                        opcode=Byte(0),
+                        impls={
+                            InstructionImpl.create(
+                                statuses={"s1": False, "s2": True},
+                                steps=[
+                                    Step.create(controls={"c1", "c2"}),
+                                    Step.create(controls={"c2", "c3"}),
+                                ],
+                            ),
+                            InstructionImpl.create(
+                                statuses={"s2": True, "s3": False},
+                                steps=[
+                                    Step.create(controls={"c3", "c4"}),
+                                    Step.create(controls={"c4", "c5"}),
+                                ],
+                            ),
+                        },
+                    )
+                },
             ),
         }
     )

@@ -64,3 +64,7 @@ def test_controls() -> None:
 
 def test_statuses() -> None:
     assert im.statuses == {"a", "b", "c"}
+
+
+def test_max_num_steps() -> None:
+    assert im.max_num_steps == 2

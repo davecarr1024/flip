@@ -71,3 +71,7 @@ class Instruction(Sized, Iterable[InstructionMode]):
     def statuses(self) -> frozenset[str]:
         """The set of all statuses used by any mode of this instruction."""
         return frozenset[str]().union(*[mode.statuses for mode in self])
+
+    @property
+    def max_num_steps(self) -> int:
+        return max(mode.max_num_steps for mode in self)

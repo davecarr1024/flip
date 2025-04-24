@@ -62,3 +62,8 @@ class InstructionSet(Sized, Iterable[Instruction]):
     def statuses(self) -> frozenset[str]:
         """The set of all statuses used by any instruction in the set."""
         return frozenset[str]().union(*[instruction.statuses for instruction in self])
+
+    @property
+    def max_num_steps(self) -> int:
+        """The maximum number of steps in any instruction in the set."""
+        return max(instruction.max_num_steps for instruction in self)

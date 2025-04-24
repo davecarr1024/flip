@@ -2,7 +2,15 @@ import pytest
 
 from flip.bytes import Byte
 from flip.components import Bus, Component, Register, Status
-from flip.components.controller import Controller, Instruction, InstructionSet, Step
+from flip.components.controller import Controller
+from flip.instructions import (
+    AddressingMode,
+    Instruction,
+    InstructionImpl,
+    InstructionMode,
+    InstructionSet,
+    Step,
+)
 
 
 def test_controller() -> None:
@@ -11,39 +19,46 @@ def test_controller() -> None:
     root = Component()
     bus = Bus(name="bus", parent=root)
     Controller(
+        name="controller",
+        parent=root,
+        bus=bus,
         instruction_set=InstructionSet.create(
             instructions={
                 Instruction.create(
                     name="tax",
-                    opcode=Byte(0x00),
-                    statuses={"tax_enable": True},
-                    steps=[
-                        Step.create(
-                            [
-                                "a.write",
-                                "x.read",
-                                "controller.step_counter.reset",
-                            ]
+                    modes={
+                        InstructionMode.create(
+                            mode=AddressingMode.NONE,
+                            opcode=Byte(0x00),
+                            impls={
+                                InstructionImpl.create(
+                                    steps=[
+                                        Step.create(
+                                            [
+                                                "a.write",
+                                                "x.read",
+                                                "controller.step_counter.reset",
+                                            ]
+                                        ),
+                                    ],
+                                    statuses={"tax_enable": True},
+                                ),
+                                InstructionImpl.create(
+                                    steps=[
+                                        Step.create(
+                                            [
+                                                "controller.step_counter.reset",
+                                            ]
+                                        ),
+                                    ],
+                                    statuses={"tax_enable": False},
+                                ),
+                            },
                         ),
-                    ],
-                ),
-                Instruction.create(
-                    name="tax",
-                    opcode=Byte(0x00),
-                    statuses={"tax_enable": False},
-                    steps=[
-                        Step.create(
-                            [
-                                "controller.step_counter.reset",
-                            ]
-                        ),
-                    ],
-                ),
+                    },
+                )
             }
         ),
-        parent=root,
-        name="controller",
-        bus=bus,
     )
     a = Register(
         name="a",
@@ -83,16 +98,71 @@ def test_controller() -> None:
     assert x.value == Byte(0x01)
 
 
+def test_unknown_signal() -> None:
+    # same computer as above, but remove the tax_enable status so that
+    # controller is trying to get a status that doesn't exist
+    root = Component()
+    bus = Bus(name="bus", parent=root)
+    Controller(
+        name="controller",
+        parent=root,
+        bus=bus,
+        instruction_set=InstructionSet.create(
+            instructions={
+                Instruction.create(
+                    name="tax",
+                    modes={
+                        InstructionMode.create(
+                            mode=AddressingMode.NONE,
+                            opcode=Byte(0x00),
+                            impls={
+                                InstructionImpl.create(
+                                    steps=[
+                                        Step.create(
+                                            [
+                                                "a.write",
+                                                "x.read",
+                                                "controller.step_counter.reset",
+                                            ]
+                                        ),
+                                    ],
+                                    statuses={"tax_enable": True},
+                                ),
+                                InstructionImpl.create(
+                                    steps=[
+                                        Step.create(
+                                            [
+                                                "controller.step_counter.reset",
+                                            ]
+                                        ),
+                                    ],
+                                    statuses={"tax_enable": False},
+                                ),
+                            },
+                        ),
+                    },
+                )
+            }
+        ),
+    )
+    with pytest.raises(Controller.MissingStatusError):
+        root.tick()
+
+
 def test_unknown_control() -> None:
     # same computer as above, but remove the registers so we
     # don't have any control to be setting with this isntruction
     root = Component()
     bus = Bus(name="bus", parent=root)
     Controller(
+        name="controller",
+        parent=root,
+        bus=bus,
         instruction_set=InstructionSet.create(
             instructions={
-                Instruction.create(
+                Instruction.create_simple(
                     name="tax",
+                    mode=AddressingMode.NONE,
                     opcode=Byte(0x00),
                     steps=[
                         Step.create(
@@ -103,12 +173,9 @@ def test_unknown_control() -> None:
                             ]
                         ),
                     ],
-                ),
-            }
+                )
+            },
         ),
-        parent=root,
-        name="controller",
-        bus=bus,
     )
-    with pytest.raises(Controller.KeyError):
+    with pytest.raises(Controller.MissingControlError):
         root.tick()

@@ -3,37 +3,10 @@ from pytest_subtests import SubTests
 
 from flip.bytes import Byte
 from flip.components.controller import (
-    Instruction,
     InstructionMemory,
-    InstructionMemoryFormat,
-    InstructionSet,
-    Step,
 )
 
-imf = InstructionMemoryFormat(
-    instruction_set=InstructionSet.create(
-        instructions={
-            Instruction.create(
-                name="i1",
-                opcode=Byte(0),
-                statuses={"s1": False, "s2": True},
-                steps=[
-                    Step.create(controls={"c1", "c2"}),
-                    Step.create(controls={"c2", "c3"}),
-                ],
-            ),
-            Instruction.create(
-                name="i2",
-                opcode=Byte(1),
-                statuses={"s2": True, "s3": False},
-                steps=[
-                    Step.create(controls={"c3", "c4"}),
-                    Step.create(controls={"c4", "c5"}),
-                ],
-            ),
-        }
-    )
-)
+from .instruction_memory_format_test import imf
 
 
 def test_get(subtests: SubTests) -> None:

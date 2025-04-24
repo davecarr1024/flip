@@ -4,10 +4,10 @@ from flip.components.bus import Bus
 from flip.components.component import Component
 from flip.components.control import Control
 from flip.components.controller.controller import Controller
-from flip.components.controller.instruction_set import InstructionSet
 from flip.components.memory import Memory
 from flip.components.program_counter import ProgramCounter
 from flip.components.register import Register
+from flip.instructions import InstructionSet
 
 
 class Computer(Component):

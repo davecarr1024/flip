@@ -19,6 +19,10 @@ class InstructionMemory(component.Component):
         self.__format = format
         self.__data = data
 
+    @property
+    def format(self) -> InstructionMemoryFormat:
+        return self.__format
+
     def _get(self, address: int) -> int:
         try:
             return self.__data[address]

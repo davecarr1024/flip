@@ -1,7 +1,7 @@
 from typing import Iterator, Mapping, override
 
-from flip.components.controller.instruction_set import InstructionSet
 from flip.core import Error, Errorable
+from flip.instructions import InstructionSet
 
 
 class StatusMapping(Mapping[str, int], Errorable):

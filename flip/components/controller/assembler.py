@@ -1,8 +1,8 @@
 from flip.bytes import Byte
 from flip.components.controller.instruction_memory import InstructionMemory
 from flip.components.controller.instruction_memory_format import InstructionMemoryFormat
-from flip.components.controller.instruction_set import InstructionSet
 from flip.core import Error, Errorable
+from flip.instructions import InstructionSet
 
 
 class Assembler(Errorable):
@@ -31,15 +31,28 @@ class Assembler(Errorable):
         return result
 
     def assemble(self) -> InstructionMemory:
-        data = dict[int, int]()
-        for instruction in self.__instruction_set.instructions:
-            for statuses in self._expand_statuses(dict(instruction.statuses)):
-                for step_index, step in enumerate(instruction.steps):
-                    data[
-                        self.__format.encode_address(
-                            instruction.opcode,
-                            statuses,
-                            Byte(step_index),
-                        )
-                    ] = self.__format.encode_controls(step.controls)
+        data: dict[int, int] = {}
+        for instruction in self.__instruction_set:
+            for mode in instruction:
+                for impl in mode:
+                    for statuses in self._expand_statuses(dict(impl.statuses)):
+                        for step_index, step in enumerate(impl):
+                            address = self.__format.encode_address(
+                                opcode=mode.opcode,
+                                statuses=statuses,
+                                step_index=Byte(step_index),
+                            )
+                            data[address] = self.__format.encode_controls(step)
         return InstructionMemory(data=data, format=self.__format)
+        # data = dict[int, int]()
+        # for instruction in self.__instruction_set:
+        #     for statuses in self._expand_statuses(dict(instruction.statuses)):
+        #         for step_index, step in enumerate(instruction):
+        #             data[
+        #                 self.__format.encode_address(
+        #                     instruction.opcode,
+        #                     statuses,
+        #                     Byte(step_index),
+        #                 )
+        #             ] = self.__format.encode_controls(step.controls)
+        # return InstructionMemory(data=data, format=self.__format)
