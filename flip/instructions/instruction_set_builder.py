@@ -172,6 +172,20 @@ class InstructionSetBuilder(Errorable):
             _impl=self._impl.with_step(Step.create(controls=list(controls))),
         )
 
+    def header(self, *steps: list[str] | str | Step) -> "InstructionSetBuilder":
+        return InstructionSetBuilder(
+            _instruction_set=self._collapse_instruction()._instruction_set.with_header(
+                *steps
+            ),
+        )
+
+    def footer(self, *steps: list[str] | str | Step) -> "InstructionSetBuilder":
+        return InstructionSetBuilder(
+            _instruction_set=self._collapse_instruction()._instruction_set.with_footer(
+                *steps
+            )
+        )
+
     def build(self) -> "instruction_set.InstructionSet":
         return self._collapse_instruction()._instruction_set
 

@@ -284,3 +284,61 @@ def test_step_without_mode_raises() -> None:
     builder = InstructionSetBuilder().instruction("i")
     with pytest.raises(InstructionSetBuilder.ValueError):
         builder.step("c1")
+
+
+def test_header() -> None:
+    assert (
+        InstructionSet.builder()
+        .instruction("i", 0x00)
+        .step("c1")
+        .header("c2", ["c3", "c4"])
+        .build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+            ).with_mode(
+                InstructionMode.create(
+                    mode=AddressingMode.NONE,
+                    opcode=Byte(0x00),
+                ).with_impl(
+                    InstructionImpl.create(
+                        steps=[
+                            Step.create(controls={"c2"}),
+                            Step.create(controls={"c3", "c4"}),
+                            Step.create(controls={"c1"}),
+                        ],
+                    )
+                )
+            )
+        }
+    )
+
+
+def test_footer() -> None:
+    assert (
+        InstructionSet.builder()
+        .instruction("i", 0x00)
+        .step("c1")
+        .footer("c2", ["c3", "c4"])
+        .build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+            ).with_mode(
+                InstructionMode.create(
+                    mode=AddressingMode.NONE,
+                    opcode=Byte(0x00),
+                ).with_impl(
+                    InstructionImpl.create(
+                        steps=[
+                            Step.create(controls={"c1"}),
+                            Step.create(controls={"c2"}),
+                            Step.create(controls={"c3", "c4"}),
+                        ],
+                    )
+                )
+            )
+        }
+    )
