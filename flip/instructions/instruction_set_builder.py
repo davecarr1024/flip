@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import Callable, Literal, Optional
 
 from flip.bytes import Byte
 from flip.core import Error, Errorable
@@ -185,6 +185,11 @@ class InstructionSetBuilder(Errorable):
                 *steps
             )
         )
+
+    def apply(
+        self, f: Callable[["InstructionSetBuilder"], "InstructionSetBuilder"]
+    ) -> "InstructionSetBuilder":
+        return f(self)
 
     def build(self) -> "instruction_set.InstructionSet":
         return self._collapse_instruction()._instruction_set

@@ -342,3 +342,29 @@ def test_footer() -> None:
             )
         }
     )
+
+
+def test_apply() -> None:
+    def make_instruction(builder: InstructionSetBuilder) -> InstructionSetBuilder:
+        return builder.instruction("i", 0x00).step("c1")
+
+    assert InstructionSet.builder().apply(
+        make_instruction
+    ).build() == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+            ).with_mode(
+                InstructionMode.create(
+                    mode=AddressingMode.NONE,
+                    opcode=Byte(0x00),
+                ).with_impl(
+                    InstructionImpl.create(
+                        steps=[
+                            Step.create(controls={"c1"}),
+                        ],
+                    )
+                )
+            )
+        }
+    )
