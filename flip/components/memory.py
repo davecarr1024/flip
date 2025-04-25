@@ -4,7 +4,7 @@ from flip.bytes import Byte, Word
 from flip.components.bus import Bus
 from flip.components.component import Component
 from flip.components.control import Control
-from flip.components.register import Register
+from flip.components.word_register import WordRegister
 
 
 class Memory(Component, MutableMapping[Word, Byte]):
@@ -26,19 +26,18 @@ class Memory(Component, MutableMapping[Word, Byte]):
         self.__write = Control(name="write", parent=self)
         self.__read = Control(name="read", parent=self)
         self.__high_reset = Control(name="high_reset", parent=self)
-        self.__address_low = Register(name="address_low", bus=bus, parent=self)
-        self.__address_high = Register(name="address_high", bus=bus, parent=self)
+        self.__address = WordRegister(name="address", bus=bus, parent=self)
         self.__data: MutableMapping[Word, Byte] = (
             dict(data) if data is not None else dict()
         )
 
     @property
     def address(self) -> Word:
-        return Word.from_bytes(self.__address_low.value, self.__address_high.value)
+        return self.__address.value
 
     @address.setter
     def address(self, value: Word) -> None:
-        self.__address_low.value, self.__address_high.value = value.to_bytes()
+        self.__address.value = value
 
     @property
     def value(self) -> Byte:

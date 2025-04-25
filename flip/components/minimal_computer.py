@@ -12,20 +12,23 @@ class MinimalComputer(Computer):
         name: Optional[str] = None,
         children: Optional[Iterable[Component]] = None,
     ) -> None:
-        def load_byte(
-            from_low: str,
-            from_high: str,
+        def load_byte_from_register_address(
+            from_: str,
             to: str,
         ) -> Callable[[InstructionSetBuilder], InstructionSetBuilder]:
-            """Copy a byte from memory to a byte register."""
+            """Copy a byte from memory at {from} to a byte register.
+
+            {from} is a word register, and the address is read from it.
+            {to} is a byte register, and the byte is written to it.
+            """
 
             def impl(builder: InstructionSetBuilder) -> InstructionSetBuilder:
                 return (
                     builder
-                    # copy low address byte to memory.address_low
-                    .step(from_low, "memory.address_low.read")
-                    # copy high address byte to memory.address_high
-                    .step(from_high, "memory.address_high.read")
+                    # copy low address byte to memory.address.low
+                    .step(f"{from_}.low.write", "memory.address.low.read")
+                    # copy high address byte to memory.address.high
+                    .step(f"{from_}.high.write", "memory.address.high.read")
                     # read byte from memory to {to}
                     .step("memory.write", to)
                 )
@@ -35,16 +38,18 @@ class MinimalComputer(Computer):
         def load_byte_at_pc(
             to: str,
         ) -> Callable[[InstructionSetBuilder], InstructionSetBuilder]:
-            """Copy the next byte at pc to a byte register."""
+            """Copy the next byte in memory at {pc} to a byte register.
+
+            {to} is a byte register, and the byte is written to it.
+            """
 
             def impl(builder: InstructionSetBuilder) -> InstructionSetBuilder:
                 return (
                     builder
                     # load byte from memory at program counter to {to}
                     .apply(
-                        load_byte(
-                            "program_counter.low.write",
-                            "program_counter.high.write",
+                        load_byte_from_register_address(
+                            "program_counter",
                             to,
                         )
                     )
@@ -58,7 +63,11 @@ class MinimalComputer(Computer):
             to: str,
             buffer: str = "arg_buffer.low",
         ) -> Callable[[InstructionSetBuilder], InstructionSetBuilder]:
-            """Copy the next two bytes at pc to a word register."""
+            """Copy the two bytes in memory at {pc} to a word register.
+
+            {to} is a word register, and the bytes are written to it.
+            {buffer} is a byte register, and the first byte is written to it.
+            """
 
             def impl(builder: InstructionSetBuilder) -> InstructionSetBuilder:
                 return (
@@ -95,18 +104,11 @@ class MinimalComputer(Computer):
                     .mode("immediate", 0x06)
                     .apply(load_byte_at_pc("a.read"))
                     .mode("absolute", 0x07)
-                    .apply(load_byte_at_pc("arg_buffer.low.read"))
-                    .apply(load_byte_at_pc("arg_buffer.high.read"))
-                    .apply(
-                        load_byte(
-                            "arg_buffer.low.write",
-                            "arg_buffer.high.write",
-                            "a.read",
-                        )
-                    )
+                    .apply(load_word_at_pc("memory.address"))
+                    .step("memory.write", "a.read")
                     .mode("zero_page", 0x08)
-                    .apply(load_byte_at_pc("memory.address_low.read"))
-                    .step("memory.address_high.reset")
+                    .apply(load_byte_at_pc("memory.address.low.read"))
+                    .step("memory.address.high.reset")
                     .step("memory.write", "a.read")
                     .instruction("jmp")
                     .mode("absolute", 0x20)
@@ -114,11 +116,11 @@ class MinimalComputer(Computer):
                     .header(
                         [
                             "program_counter.low.write",
-                            "memory.address_low.read",
+                            "memory.address.low.read",
                         ],
                         [
                             "program_counter.high.write",
-                            "memory.address_high.read",
+                            "memory.address.high.read",
                         ],
                         [
                             "program_counter.increment",
