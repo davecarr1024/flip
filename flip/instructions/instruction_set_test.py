@@ -120,3 +120,7 @@ def test_statuses() -> None:
 
 def test_max_num_steps() -> None:
     assert is_.max_num_steps == 3
+
+
+def test_instructions_by_name() -> None:
+    assert is_.instructions_by_name == {"i1": i1, "i2": i2}

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, replace
-from typing import Iterable, Iterator, Optional, Sized, override
+from typing import Iterable, Iterator, Mapping, Optional, Sized, override
 
 from flip.bytes import Byte
 from flip.instructions.addressing_mode import AddressingMode
@@ -75,3 +75,7 @@ class Instruction(Sized, Iterable[InstructionMode]):
     @property
     def max_num_steps(self) -> int:
         return max(mode.max_num_steps for mode in self)
+
+    @property
+    def modes_by_addressing_mode(self) -> Mapping[AddressingMode, InstructionMode]:
+        return {mode.mode: mode for mode in self._modes}

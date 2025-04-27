@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, replace
-from typing import Iterable, Iterator, Optional, Sized, override
+from typing import Iterable, Iterator, Mapping, Optional, Sized, override
 
 from flip.instructions.instruction import Instruction
 from flip.instructions.step import Step
@@ -87,6 +87,10 @@ class InstructionSet(Sized, Iterable[Instruction]):
     @staticmethod
     def builder() -> "instruction_set_builder.InstructionSetBuilder":
         return instruction_set_builder.InstructionSetBuilder()
+
+    @property
+    def instructions_by_name(self) -> Mapping[str, Instruction]:
+        return {instruction.name: instruction for instruction in self._instructions}
 
 
 from flip.instructions import instruction_set_builder
