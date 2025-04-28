@@ -104,6 +104,9 @@ class Program(Errorable):
         name: str
         arg: Optional[Arg] = None
 
+        def with_arg(self, arg: Arg) -> "Program.Instruction":
+            return replace(self, arg=arg)
+
         def _addressing_mode(self) -> AddressingMode:
             return (
                 self.arg.addressing_mode()
