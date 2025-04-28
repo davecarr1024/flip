@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Iterable, Iterator, Sized, override
 
 from flip.core import Error, Errorable
@@ -9,6 +10,29 @@ class Byte(Errorable, Sized, Iterable[bool]):
     class IndexError(Error, IndexError): ...
 
     class ValueError(Error, ValueError): ...
+
+    @dataclass(frozen=True, kw_only=True)
+    class Result:
+        value: "Byte"
+        carry: bool = False  # Set if result > 255 (unsigned overflow)
+        zero: bool = False  # Set if result == 0
+        negative: bool = False  # Set if bit 7 (MSB) is 1
+        overflow: bool = False  # Set if signed overflow (see rule below)
+        half_carry: bool = False  # Set if carry from bit 3 to bit 4 (BCD)
+
+        def __repr__(self) -> str:
+            flags = list[str]()
+            if self.carry:
+                flags.append("C")
+            if self.zero:
+                flags.append("Z")
+            if self.negative:
+                flags.append("N")
+            if self.overflow:
+                flags.append("V")
+            if self.half_carry:
+                flags.append("H")
+            return f"<{self.value!r} {' '.join(flags)}>"
 
     def __init__(self, value: int = 0) -> None:
         self.__value = value & 0xFF
@@ -63,14 +87,14 @@ class Byte(Errorable, Sized, Iterable[bool]):
     def unsigned_value(self, value: int) -> None:
         self.__value = value & 0xFF
 
-    def add(self, rhs: "Byte", carry_in: bool = False) -> "result.Result":
+    def add(self, rhs: "Byte", carry_in: bool = False) -> "Byte.Result":
         a = self.unsigned_value
         b = rhs.unsigned_value
         carry_int = 1 if carry_in else 0
         total = a + b + carry_int
         result_ = total & 0xFF
 
-        return result.Result(
+        return Byte.Result(
             value=Byte(result_),
             carry=total > 0xFF,
             zero=result_ == 0,
@@ -79,7 +103,7 @@ class Byte(Errorable, Sized, Iterable[bool]):
             half_carry=((a & 0xF) + (b & 0xF) + carry_int) > 0xF,
         )
 
-    def sub(self, rhs: "Byte", carry_in: bool = True) -> "result.Result":
+    def sub(self, rhs: "Byte", carry_in: bool = True) -> "Byte.Result":
         a = self.unsigned_value
         b = rhs.unsigned_value
         borrow = 0 if carry_in else 1  # carry_in=True means no borrow
@@ -87,7 +111,7 @@ class Byte(Errorable, Sized, Iterable[bool]):
         total = a - b - borrow
         result_ = total & 0xFF
 
-        return result.Result(
+        return Byte.Result(
             value=Byte(result_),
             # In subtraction, carry means NO borrow happened.
             carry=(a - b - borrow) >= 0,
@@ -100,62 +124,62 @@ class Byte(Errorable, Sized, Iterable[bool]):
             half_carry=((a & 0xF) - (b & 0xF) - borrow) < 0,
         )
 
-    def and_(self, rhs: "Byte") -> "result.Result":
+    def and_(self, rhs: "Byte") -> "Byte.Result":
         result_ = self.unsigned_value & rhs.unsigned_value
-        return result.Result(
+        return Byte.Result(
             value=Byte(result_),
             zero=result_ == 0,
             negative=(result_ & 0x80) != 0,
         )
 
-    def or_(self, rhs: "Byte") -> "result.Result":
+    def or_(self, rhs: "Byte") -> "Byte.Result":
         result_ = self.unsigned_value | rhs.unsigned_value
-        return result.Result(
+        return Byte.Result(
             value=Byte(result_),
             zero=result_ == 0,
             negative=(result_ & 0x80) != 0,
         )
 
-    def xor(self, rhs: "Byte") -> "result.Result":
+    def xor(self, rhs: "Byte") -> "Byte.Result":
         result_ = self.unsigned_value ^ rhs.unsigned_value
-        return result.Result(
+        return Byte.Result(
             value=Byte(result_), zero=result_ == 0, negative=(result_ & 0x80) != 0
         )
 
-    def shift_left(self) -> "result.Result":
+    def shift_left(self) -> "Byte.Result":
         a = self.unsigned_value
         result_ = (a << 1) & 0xFF
-        return result.Result(
+        return Byte.Result(
             value=Byte(result_),
             zero=result_ == 0,
             negative=(result_ & 0x80) != 0,
             carry=(a & 0x80) != 0,
         )
 
-    def shift_right(self) -> "result.Result":
+    def shift_right(self) -> "Byte.Result":
         a = self.unsigned_value
         result_ = (a >> 1) & 0xFF
-        return result.Result(
+        return Byte.Result(
             value=Byte(result_),
             zero=result_ == 0,
             negative=(result_ & 0x80) != 0,
             carry=(a & 0x01) != 0,
         )
 
-    def roll_left(self, carry_in: bool = False) -> "result.Result":
+    def roll_left(self, carry_in: bool = False) -> "Byte.Result":
         a = self.unsigned_value
         result_ = ((a << 1) | (1 if carry_in else 0)) & 0xFF
-        return result.Result(
+        return Byte.Result(
             value=Byte(result_),
             zero=result_ == 0,
             negative=(result_ & 0x80) != 0,
             carry=(a & 0x80) != 0,
         )
 
-    def roll_right(self, carry_in: bool = False) -> "result.Result":
+    def roll_right(self, carry_in: bool = False) -> "Byte.Result":
         a = self.unsigned_value
         result_ = ((a >> 1) | (0x80 if carry_in else 0)) & 0xFF
-        return result.Result(
+        return Byte.Result(
             value=Byte(result_),
             zero=result_ == 0,
             negative=(result_ & 0x80) != 0,
@@ -163,4 +187,3 @@ class Byte(Errorable, Sized, Iterable[bool]):
         )
 
 
-from flip.bytes import result

@@ -1,7 +1,7 @@
 import pytest
 from pytest_subtests import SubTests
 
-from flip.bytes import Byte, Result
+from flip.bytes import Byte
 
 
 def test_ctor() -> None:
@@ -56,13 +56,13 @@ def test_eq() -> None:
 
 
 def test_add(subtests: SubTests) -> None:
-    for lhs, rhs, carry_in, expected in list[tuple[Byte, Byte, bool, Result]](
+    for lhs, rhs, carry_in, expected in list[tuple[Byte, Byte, bool, Byte.Result]](
         [
             (
                 Byte(0),
                 Byte(0),
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(0),
                     zero=True,
                 ),
@@ -71,7 +71,7 @@ def test_add(subtests: SubTests) -> None:
                 Byte(1),
                 Byte(0),
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(1),
                 ),
             ),
@@ -79,7 +79,7 @@ def test_add(subtests: SubTests) -> None:
                 Byte(0),
                 Byte(1),
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(1),
                 ),
             ),
@@ -87,7 +87,7 @@ def test_add(subtests: SubTests) -> None:
                 Byte(0),
                 Byte(0),
                 True,
-                Result(
+                Byte.Result(
                     value=Byte(1),
                 ),
             ),
@@ -95,7 +95,7 @@ def test_add(subtests: SubTests) -> None:
                 Byte(0x0F),
                 Byte(0x01),
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(0x10),
                     half_carry=True,
                 ),
@@ -104,7 +104,7 @@ def test_add(subtests: SubTests) -> None:
                 Byte(0xFF),
                 Byte(1),
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(0),
                     carry=True,
                     half_carry=True,
@@ -115,7 +115,7 @@ def test_add(subtests: SubTests) -> None:
                 Byte(0x01),
                 Byte(-0x02),
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(-0x01),
                     negative=True,
                 ),
@@ -124,7 +124,7 @@ def test_add(subtests: SubTests) -> None:
                 Byte(0x80),  # -128
                 Byte(0x80),  # -128 → -256 → wraps to 0
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(0x00),
                     overflow=True,
                     zero=True,
@@ -135,7 +135,7 @@ def test_add(subtests: SubTests) -> None:
                 Byte(0x7F),
                 Byte(0x01),
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(0x80),
                     overflow=True,
                     half_carry=True,
@@ -149,13 +149,13 @@ def test_add(subtests: SubTests) -> None:
 
 
 def test_sub(subtests: SubTests) -> None:
-    for lhs, rhs, carry_in, expected in list[tuple[Byte, Byte, bool, Result]](
+    for lhs, rhs, carry_in, expected in list[tuple[Byte, Byte, bool, Byte.Result]](
         [
             (
                 Byte(0x00),
                 Byte(0x00),
                 True,
-                Result(
+                Byte.Result(
                     value=Byte(0x00),
                     zero=True,
                     carry=True,
@@ -165,7 +165,7 @@ def test_sub(subtests: SubTests) -> None:
                 Byte(0x01),
                 Byte(0x01),
                 True,
-                Result(
+                Byte.Result(
                     value=Byte(0x00),
                     zero=True,
                     carry=True,
@@ -175,7 +175,7 @@ def test_sub(subtests: SubTests) -> None:
                 Byte(0x01),
                 Byte(0x02),
                 True,
-                Result(
+                Byte.Result(
                     value=Byte(0xFF),
                     negative=True,
                     half_carry=True,
@@ -185,7 +185,7 @@ def test_sub(subtests: SubTests) -> None:
                 Byte(0x80),
                 Byte(0xFF),
                 True,
-                Result(
+                Byte.Result(
                     value=Byte(0x81),
                     negative=True,
                     half_carry=True,
@@ -195,7 +195,7 @@ def test_sub(subtests: SubTests) -> None:
                 Byte(0x7F),
                 Byte(0xFF),
                 True,
-                Result(
+                Byte.Result(
                     value=Byte(0x80),
                     overflow=True,
                     negative=True,
@@ -205,7 +205,7 @@ def test_sub(subtests: SubTests) -> None:
                 Byte(0x10),
                 Byte(0x01),
                 True,
-                Result(
+                Byte.Result(
                     value=Byte(0x0F),
                     carry=True,
                     half_carry=True,
@@ -215,7 +215,7 @@ def test_sub(subtests: SubTests) -> None:
                 Byte(0x10),
                 Byte(0x11),
                 True,
-                Result(
+                Byte.Result(
                     value=Byte(0xFF),
                     negative=True,
                     half_carry=True,
@@ -228,19 +228,19 @@ def test_sub(subtests: SubTests) -> None:
 
 
 def test_and(subtests: SubTests) -> None:
-    for lhs, rhs, expected in list[tuple[Byte, Byte, Result]](
+    for lhs, rhs, expected in list[tuple[Byte, Byte, Byte.Result]](
         [
             (
                 Byte(0x01),
                 Byte(0x03),
-                Result(
+                Byte.Result(
                     value=Byte(0x01),
                 ),
             ),
             (
                 Byte(0x01),
                 Byte(0x02),
-                Result(
+                Byte.Result(
                     value=Byte(0x00),
                     zero=True,
                 ),
@@ -248,7 +248,7 @@ def test_and(subtests: SubTests) -> None:
             (
                 Byte(0xF0),
                 Byte(0xF1),
-                Result(
+                Byte.Result(
                     value=Byte(0xF0),
                     negative=True,
                 ),
@@ -260,19 +260,19 @@ def test_and(subtests: SubTests) -> None:
 
 
 def test_or(subtests: SubTests) -> None:
-    for lhs, rhs, expected in list[tuple[Byte, Byte, Result]](
+    for lhs, rhs, expected in list[tuple[Byte, Byte, Byte.Result]](
         [
             (
                 Byte(0x01),
                 Byte(0x02),
-                Result(
+                Byte.Result(
                     value=Byte(0x03),
                 ),
             ),
             (
                 Byte(0x00),
                 Byte(0x00),
-                Result(
+                Byte.Result(
                     value=Byte(0x00),
                     zero=True,
                 ),
@@ -280,7 +280,7 @@ def test_or(subtests: SubTests) -> None:
             (
                 Byte(0xF0),
                 Byte(0xF1),
-                Result(
+                Byte.Result(
                     value=Byte(0xF1),
                     negative=True,
                 ),
@@ -292,19 +292,19 @@ def test_or(subtests: SubTests) -> None:
 
 
 def test_xor(subtests: SubTests) -> None:
-    for lhs, rhs, expected in list[tuple[Byte, Byte, Result]](
+    for lhs, rhs, expected in list[tuple[Byte, Byte, Byte.Result]](
         [
             (
                 Byte(0x01),
                 Byte(0x02),
-                Result(
+                Byte.Result(
                     value=Byte(0x03),
                 ),
             ),
             (
                 Byte(0x01),
                 Byte(0x01),
-                Result(
+                Byte.Result(
                     value=Byte(0x00),
                     zero=True,
                 ),
@@ -312,7 +312,7 @@ def test_xor(subtests: SubTests) -> None:
             (
                 Byte(0xF0),
                 Byte(0x01),
-                Result(
+                Byte.Result(
                     value=Byte(0xF1),
                     negative=True,
                 ),
@@ -324,17 +324,17 @@ def test_xor(subtests: SubTests) -> None:
 
 
 def test_shift_left(subtests: SubTests) -> None:
-    for value, expected in list[tuple[Byte, Result]](
+    for value, expected in list[tuple[Byte, Byte.Result]](
         [
             (
                 Byte(0x01),
-                Result(
+                Byte.Result(
                     value=Byte(0x02),
                 ),
             ),
             (
                 Byte(0x80),
-                Result(
+                Byte.Result(
                     value=Byte(0x00),
                     carry=True,
                     zero=True,
@@ -342,14 +342,14 @@ def test_shift_left(subtests: SubTests) -> None:
             ),
             (
                 Byte(0x81),
-                Result(
+                Byte.Result(
                     value=Byte(0x02),
                     carry=True,
                 ),
             ),
             (
                 Byte(0x7F),
-                Result(
+                Byte.Result(
                     value=Byte(0xFE),
                     negative=True,
                 ),
@@ -361,11 +361,11 @@ def test_shift_left(subtests: SubTests) -> None:
 
 
 def test_shift_right(subtests: SubTests) -> None:
-    for value, expected in list[tuple[Byte, Result]](
+    for value, expected in list[tuple[Byte, Byte.Result]](
         [
             (
                 Byte(0x01),
-                Result(
+                Byte.Result(
                     value=Byte(0x00),
                     carry=True,
                     zero=True,
@@ -373,14 +373,14 @@ def test_shift_right(subtests: SubTests) -> None:
             ),
             (
                 Byte(0x03),
-                Result(
+                Byte.Result(
                     value=Byte(0x01),
                     carry=True,
                 ),
             ),
             (
                 Byte(0x80),
-                Result(
+                Byte.Result(
                     value=Byte(0x40),
                 ),
             ),
@@ -391,19 +391,19 @@ def test_shift_right(subtests: SubTests) -> None:
 
 
 def test_roll_left(subtests: SubTests) -> None:
-    for value, carry_in, expected in list[tuple[Byte, bool, Result]](
+    for value, carry_in, expected in list[tuple[Byte, bool, Byte.Result]](
         [
             (
                 Byte(0x01),
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(0x02),
                 ),
             ),
             (
                 Byte(0x80),
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(0x00),
                     carry=True,
                     zero=True,
@@ -412,7 +412,7 @@ def test_roll_left(subtests: SubTests) -> None:
             (
                 Byte(0x80),
                 True,
-                Result(
+                Byte.Result(
                     value=Byte(0x01),
                     carry=True,
                 ),
@@ -420,7 +420,7 @@ def test_roll_left(subtests: SubTests) -> None:
             (
                 Byte(0x7F),
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(0xFE),
                     negative=True,
                 ),
@@ -432,12 +432,12 @@ def test_roll_left(subtests: SubTests) -> None:
 
 
 def test_roll_right(subtests: SubTests):
-    for value, carry_in, expected in list[tuple[Byte, bool, Result]](
+    for value, carry_in, expected in list[tuple[Byte, bool, Byte.Result]](
         [
             (
                 Byte(0x01),
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(0x00),
                     carry=True,
                     zero=True,
@@ -446,7 +446,7 @@ def test_roll_right(subtests: SubTests):
             (
                 Byte(0x03),
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(0x01),
                     carry=True,
                 ),
@@ -454,14 +454,14 @@ def test_roll_right(subtests: SubTests):
             (
                 Byte(0x80),
                 False,
-                Result(
+                Byte.Result(
                     value=Byte(0x40),
                 ),
             ),
             (
                 Byte(0x00),
                 True,
-                Result(
+                Byte.Result(
                     value=Byte(0x80),
                     negative=True,
                 ),
