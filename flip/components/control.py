@@ -24,8 +24,6 @@ class Control(component.Component):
 
     @value.setter
     def value(self, value: bool) -> None:
-        # if value != self.__value:
-        #     self._log(f"setting value to {value}")
         self.__value = value
 
     @property

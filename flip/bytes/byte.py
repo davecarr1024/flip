@@ -185,5 +185,3 @@ class Byte(Errorable, Sized, Iterable[bool]):
             negative=(result_ & 0x80) != 0,
             carry=(a & 0x01) != 0,
         )
-
-
