@@ -103,3 +103,6 @@ class Memory(Component, MutableMapping[Word, Byte]):
             value = self.value
             self._log(f"writing {value} to bus from address {self.address}")
             self.__bus.set(value, self)
+
+    def load(self, data: Mapping[Word, Byte]) -> None:
+        self.__data = dict(self.__data) | dict(data)

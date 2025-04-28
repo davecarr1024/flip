@@ -92,3 +92,13 @@ def test_write() -> None:
     a.read = True
     root.tick()
     assert a.value == Byte(0x56)
+
+
+def test_load() -> None:
+    root = Component()
+    bus = Bus(name="bus", parent=root)
+    memory = Memory(name="memory", bus=bus, parent=root)
+    memory.load({Word(0x1234): Byte(0x56)})
+    assert memory[Word(0x1234)] == Byte(0x56)
+    memory.load({Word(0x1234): Byte(0x78)})
+    assert memory[Word(0x1234)] == Byte(0x78)

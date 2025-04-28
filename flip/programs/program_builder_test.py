@@ -80,6 +80,22 @@ def test_absolute_str() -> None:
     )
 
 
+def test_zero_page_int() -> None:
+    assert program_builder.instruction("lda").zero_page(
+        0x10
+    ).build() == program.with_statement(
+        Program.Instruction("lda", Program.Instruction.ZeroPage(Byte(0x10)))
+    )
+
+
+def test_zero_page_byte() -> None:
+    assert program_builder.instruction("lda").zero_page(
+        Byte(0x10)
+    ).build() == program.with_statement(
+        Program.Instruction("lda", Program.Instruction.ZeroPage(Byte(0x10)))
+    )
+
+
 def test_label() -> None:
     assert program_builder.label("label").build() == program.with_label("label")
 
@@ -100,3 +116,41 @@ def test_no_instruction() -> None:
 def test_duplicate_arg() -> None:
     with pytest.raises(ProgramBuilder.DuplicateArg):
         program_builder.instruction("lda", 0x10).immediate(0x10).build()
+
+
+def test_data() -> None:
+    assert program_builder.data(Byte(0x01), Byte(0x02)).build() == program.with_values(
+        [Byte(0x01), Byte(0x02)]
+    )
+
+
+def test_pending_instruction_then_label() -> None:
+    assert (
+        program_builder.instruction("lda", "label").label("label").data(0xAB).build()
+    ) == (
+        program.with_statement(
+            Program.Instruction("lda", Program.Instruction.Absolute("label"))
+        )
+        .with_label("label")
+        .with_value(Byte(0xAB))
+    )
+
+
+def test_pending_instruction_then_at() -> None:
+    assert (
+        program_builder.instruction("lda", "label").at(0xBEEF).data(0xAB).build()
+    ) == (
+        program.with_statement(
+            Program.Instruction("lda", Program.Instruction.Absolute("label"))
+        )
+        .at_position(Word(0xBEEF))
+        .with_value(Byte(0xAB))
+    )
+
+
+def test_pending_instruction_then_data() -> None:
+    assert (program_builder.instruction("lda", "label").data(0xAB).build()) == (
+        program.with_statement(
+            Program.Instruction("lda", Program.Instruction.Absolute("label"))
+        ).with_value(Byte(0xAB))
+    )

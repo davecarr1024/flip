@@ -101,6 +101,20 @@ class Program(Errorable):
             def addressing_mode(self) -> AddressingMode:
                 return AddressingMode.IMMEDIATE
 
+        @dataclass(frozen=True)
+        class ZeroPage(Arg):
+            value: Byte
+
+            @override
+            def bind(
+                self, assembler: "assembler_lib.Assembler"
+            ) -> "assembler_lib.Assembler":
+                return assembler.with_value(self.value)
+
+            @override
+            def addressing_mode(self) -> AddressingMode:
+                return AddressingMode.ZERO_PAGE
+
         name: str
         arg: Optional[Arg] = None
 
@@ -153,6 +167,10 @@ class Program(Errorable):
 
     instruction_set: InstructionSet
     statements: list[Statement] = field(default_factory=list[Statement])
+
+    @override
+    def __repr__(self) -> str:
+        return f"Program({self.statements})"
 
     def with_statement(self, statement: Statement) -> "Program":
         return replace(self, statements=self.statements + [statement])

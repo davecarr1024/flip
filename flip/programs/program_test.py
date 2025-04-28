@@ -13,6 +13,8 @@ instruction_set = (
     .step()
     .mode("absolute", 0x02)
     .step()
+    .mode("zero_page", 0x03)
+    .step()
     .instruction("only_supports_immediate")
     .mode("immediate", 0x03)
     .step()
@@ -83,6 +85,15 @@ def test_instruction_absolute_ref() -> None:
         Word(0x0000): Byte(0x02),
         Word(0x0001): Byte(0xEF),
         Word(0x0002): Byte(0xBE),
+    }
+
+
+def test_instruction_zero_page() -> None:
+    assert program.with_statement(
+        Program.Instruction("lda", Program.Instruction.ZeroPage(Byte(0x10)))
+    ).assemble().memory == {
+        Word(0x0000): Byte(0x03),
+        Word(0x0001): Byte(0x10),
     }
 
 

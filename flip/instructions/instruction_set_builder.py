@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
-from typing import Callable, Literal, Optional
+from dataclasses import dataclass, field, replace
+from typing import Callable, Literal, Optional, Self
 
 from flip.bytes import Byte
 from flip.core import Error, Errorable
@@ -29,7 +29,22 @@ class InstructionSetBuilder(Errorable):
         if self._instruction is None:
             assert self._mode is None
 
-    def _collapse_impl(self) -> "InstructionSetBuilder":
+    def _with(
+        self,
+        _instruction_set: Optional["instruction_set.InstructionSet"] = None,
+        _instruction: Optional[Instruction] = None,
+        _mode: Optional[InstructionMode] = None,
+        _impl: Optional[InstructionImpl] = None,
+    ) -> Self:
+        return replace(
+            self,
+            _instruction_set=_instruction_set,
+            _instruction=_instruction,
+            _mode=_mode,
+            _impl=_impl,
+        )
+
+    def _collapse_impl(self) -> Self:
         if self._impl is None:
             return self
         if self._mode is None:
@@ -37,14 +52,14 @@ class InstructionSetBuilder(Errorable):
             raise self._error(
                 "No mode to collapse impl to.", self.ValueError
             )  # pragma: no cover
-        return InstructionSetBuilder(
+        return self._with(
             _instruction_set=self._instruction_set,
             _instruction=self._instruction,
             _mode=self._mode.with_impl(self._impl),
             _impl=None,
         )
 
-    def _collapse_mode(self) -> "InstructionSetBuilder":
+    def _collapse_mode(self) -> Self:
         if self._mode is None:
             return self
         is_ = self._collapse_impl()
@@ -59,14 +74,14 @@ class InstructionSetBuilder(Errorable):
             raise self._error(
                 "No mode to collapse.", self.ValueError
             )  # pragma: no cover
-        return InstructionSetBuilder(
+        return self._with(
             _instruction_set=is_._instruction_set,
             _instruction=is_._instruction.with_mode(mode),
             _mode=None,
             _impl=None,
         )
 
-    def _collapse_instruction(self) -> "InstructionSetBuilder":
+    def _collapse_instruction(self) -> Self:
         if self._instruction is None:
             return self
         is_ = self._collapse_mode()
@@ -76,7 +91,7 @@ class InstructionSetBuilder(Errorable):
             raise self._error(
                 "No instruction to collapse.", self.ValueError
             )  # pragma: no cover
-        return InstructionSetBuilder(
+        return self._with(
             _instruction_set=is_._instruction_set.with_instruction(instruction),
             _instruction=None,
             _mode=None,
@@ -87,9 +102,9 @@ class InstructionSetBuilder(Errorable):
         self,
         name: str,
         opcode: Byte | int | None = None,
-    ) -> "InstructionSetBuilder":
+    ) -> Self:
         is_ = self._collapse_instruction()
-        is_ = InstructionSetBuilder(
+        is_ = self._with(
             _instruction_set=is_._instruction_set,
             _instruction=Instruction.create(name=name),
             _mode=None,
@@ -115,7 +130,7 @@ class InstructionSetBuilder(Errorable):
             ]
         ),
         opcode: Byte | int,
-    ) -> "InstructionSetBuilder":
+    ) -> Self:
         match mode:
             case "none":
                 mode = AddressingMode.NONE
@@ -139,25 +154,25 @@ class InstructionSetBuilder(Errorable):
         is_ = self._collapse_mode()
         if is_._instruction is None:
             raise self._error("No instruction to add mode to.", self.ValueError)
-        return InstructionSetBuilder(
+        return self._with(
             _instruction_set=is_._instruction_set,
             _instruction=is_._instruction,
             _mode=InstructionMode.create(mode=mode, opcode=opcode),
             _impl=None,
         )
 
-    def impl(self, **statuses: bool) -> "InstructionSetBuilder":
+    def impl(self, **statuses: bool) -> Self:
         is_ = self._collapse_impl()
         if is_._mode is None:
             raise self._error("No mode to add impl to.", self.ValueError)
-        return InstructionSetBuilder(
+        return self._with(
             _instruction_set=is_._instruction_set,
             _instruction=is_._instruction,
             _mode=is_._mode,
             _impl=InstructionImpl.create(statuses=statuses),
         )
 
-    def step(self, *controls: str) -> "InstructionSetBuilder":
+    def step(self, *controls: str) -> Self:
         if self._impl is None:
             try:
                 return self.impl().step(*controls)
@@ -165,30 +180,28 @@ class InstructionSetBuilder(Errorable):
                 raise self._error(
                     "Unable to create default impl to add step to.", self.ValueError
                 ) from e
-        return InstructionSetBuilder(
+        return self._with(
             _instruction_set=self._instruction_set,
             _instruction=self._instruction,
             _mode=self._mode,
             _impl=self._impl.with_step(Step.create(controls=list(controls))),
         )
 
-    def header(self, *steps: list[str] | str | Step) -> "InstructionSetBuilder":
-        return InstructionSetBuilder(
+    def header(self, *steps: list[str] | str | Step) -> Self:
+        return self._with(
             _instruction_set=self._collapse_instruction()._instruction_set.with_header(
                 *steps
             ),
         )
 
-    def footer(self, *steps: list[str] | str | Step) -> "InstructionSetBuilder":
-        return InstructionSetBuilder(
+    def footer(self, *steps: list[str] | str | Step) -> Self:
+        return self._with(
             _instruction_set=self._collapse_instruction()._instruction_set.with_footer(
                 *steps
             )
         )
 
-    def apply(
-        self, f: Callable[["InstructionSetBuilder"], "InstructionSetBuilder"]
-    ) -> "InstructionSetBuilder":
+    def apply(self, f: Callable[[Self], Self]) -> Self:
         return f(self)
 
     def build(self) -> "instruction_set.InstructionSet":
