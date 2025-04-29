@@ -1,6 +1,8 @@
+from dataclasses import dataclass
 from typing import Iterable, Mapping, Optional, Self, override
 
 from flip.bytes import Byte, Word
+from flip.components.alu.operations import Operation
 from flip.components.component import Component
 from flip.components.computer import Computer
 from flip.components.register import Register
@@ -9,6 +11,7 @@ from flip.programs import Program, ProgramBuilder
 
 
 class MinimalComputer(Computer):
+    @dataclass(frozen=True)
     class InstructionSetBuilder(Computer.InstructionSetBuilder):
         def load_byte_from_register_address(
             self,
@@ -70,9 +73,61 @@ class MinimalComputer(Computer):
                 .transfer_byte(buffer, f"{to}.low")
             )
 
+        def load_byte_from_pc_address(
+            self,
+            to: str,
+            buffer: str = "arg_buffer.low",
+        ) -> Self:
+            """Indirectly load a byte from memory using the address at {pc}."""
+            return (
+                self
+                # Load address at pc to memory.address
+                .load_word_at_pc("memory.address", buffer=buffer)
+                # Load byte at memory.address to {to}
+                .transfer_byte("memory", to)
+            )
+
+        def _a_alu_operation(self, operation: Operation | str) -> Self:
+            """Define an accumulator-based ALU operation.
+
+            Note that this assumes that alu.rhs is already loaded with
+            the rhs operand (if any) and that alu.lhs comes from the accumulator,
+            and alu.output goes to the accumulator.
+            """
+            return (
+                self.alu_operation(operation=operation, lhs="a", out="a")
+                # # a -> alu.lhs
+                # .transfer_byte("a", "alu.lhs")
+                # # run alu operation
+                # ._alu_operation(operation)
+                # # alu.output -> a
+                # .transfer_byte("alu.output","a")
+            )
+
+        def a_alu_operation_immediate(self, operation: Operation | str) -> Self:
+            """Define an accumulator-based ALU operation with immediate addressing."""
+            return (
+                self
+                # Load next byte at pc to rhs.
+                .load_byte_at_pc("alu.rhs")
+                # Run ALU operation.
+                ._a_alu_operation(operation)
+            )
+
+        def a_alu_operation_absolute(self, operation: Operation | str) -> Self:
+            """Define an accumulator-based ALU operation with absolute addressing."""
+            return (
+                self
+                # Load byte from memory at address at pc to rhs.
+                .load_byte_from_pc_address("alu.rhs")
+                # Run ALU operation.
+                ._a_alu_operation(operation)
+            )
+
     @classmethod
+    @override
     def _instruction_set_builder(cls) -> InstructionSetBuilder:
-        return cls.InstructionSetBuilder()
+        return cls.InstructionSetBuilder(alu_operation_set=cls._alu_operation_set())
 
     @override
     @classmethod
@@ -95,8 +150,7 @@ class MinimalComputer(Computer):
             .mode("immediate", 0x06)
             .load_byte_at_pc("a")
             .mode("absolute", 0x07)
-            .load_word_at_pc("memory.address")
-            .transfer_byte("memory", "a")
+            .load_byte_from_pc_address("a")
             .mode("zero_page", 0x08)
             .load_byte_at_pc("memory.address.low")
             .step("memory.address.high.reset")
@@ -104,6 +158,15 @@ class MinimalComputer(Computer):
             .instruction("jmp")
             .mode("absolute", 0x20)
             .load_word_at_pc("program_counter")
+            .instruction("sec", 0x40)
+            .step("alu.carry_in")
+            .instruction("clc", 0x41)
+            .step("alu.carry_in.clear")
+            .instruction("adc")
+            .mode("immediate", 0x42)
+            .a_alu_operation_immediate("adc")
+            .mode("absolute", 0x43)
+            .a_alu_operation_absolute("adc")
             .header(
                 [
                     "program_counter.low.write",
@@ -150,6 +213,15 @@ class MinimalComputer(Computer):
 
         def jmp(self, arg: int | Word | str) -> Self:
             return self.instruction("jmp").absolute(arg)
+
+        def sec(self) -> Self:
+            return self.instruction("sec")
+
+        def clc(self) -> Self:
+            return self.instruction("clc")
+
+        def adc(self, arg: int | Byte | str) -> Self:
+            return self.instruction("adc", arg)
 
         def load(self) -> "MinimalComputer":
             return MinimalComputer(data=self.build())

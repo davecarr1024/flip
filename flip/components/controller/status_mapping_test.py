@@ -53,5 +53,9 @@ def test_encode_address() -> None:
     assert sm.encode_address({"s1": True, "s2": True, "s3": False}) == 0b011
 
 
+def test_encode_address_with_extra_statuses() -> None:
+    assert sm.encode_address({"s1": True, "s2": True, "s3": False, "s4": True}) == 0b011
+
+
 def test_decode_address() -> None:
     assert sm.decode_address(0b011) == {"s1": True, "s2": True, "s3": False}

@@ -44,3 +44,30 @@ def test_aggregate_controls() -> None:
     assert p1.controls == {c1}
     assert p2.controls == {c2}
     assert g.controls_by_path == {"p1.c1": c1, "p2.c2": c2}
+
+
+def test_clear_inactive() -> None:
+    # c is a non-auto-clearing control, so clear control is created
+    c = Control(name="c", auto_clear=False)
+
+    # if value is true and clear is false, value should remain true
+    c.value = True
+    assert c.clear is not None and not c.clear
+    c.tick()
+    assert c.value
+
+
+def test_clear_active() -> None:
+    # c is a non-auto-clearing control, so clear control is created
+    c = Control(name="c", auto_clear=False)
+
+    # if value is true and clear is true, value should become false
+    # and clear should auto-clear
+    c.clear = True
+    c.tick()
+    assert not c.value
+    assert c.clear is not None and not c.clear
+
+
+def test_clear_not_present_when_auto_clear() -> None:
+    assert Control(name="c", auto_clear=True).clear is None

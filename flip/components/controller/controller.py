@@ -56,13 +56,12 @@ class Controller(Component):
             step_index=step_index,
         )
         for control_path in control_paths:
-            if control_path not in self.root.controls_by_path:
+            if (control := self.root.controls_by_path.get(control_path)) is None:
                 raise self._error(
                     f"Control {control_path} not found in root controls.",
                     self.MissingControlError,
                 )
-        for control in self.root.controls:
-            control.value = control.path in control_paths
+            control.value = True
         self.__step_counter.increment = True
         self._log(
             f"opcode = {opcode}, "

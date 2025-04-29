@@ -13,6 +13,15 @@ class Control(component.Component):
         super().__init__(name=name, parent=parent)
         self.__value = False
         self.__auto_clear = auto_clear
+        self.__clear: Optional[Control] = (
+            Control(
+                name="clear",
+                parent=self,
+                auto_clear=True,
+            )
+            if not self.__auto_clear
+            else None
+        )
 
     @override
     def _str_line(self) -> str:
@@ -27,11 +36,25 @@ class Control(component.Component):
         self.__value = value
 
     @property
+    def clear(self) -> Optional[bool]:
+        return self.__clear.value if self.__clear is not None else None
+
+    @clear.setter
+    def clear(self, value: bool) -> None:
+        if self.__clear is not None:
+            self.__clear.value = value
+
+    @property
     @override
     def controls(self) -> frozenset["Control"]:
-        return frozenset({self})
+        return super().controls | frozenset({self})
 
     @override
     def _tick_clear(self) -> None:
         if self.__auto_clear:
+            self.value = False
+
+    @override
+    def _tick_process(self) -> None:
+        if self.__clear is not None and self.__clear.value:
             self.value = False

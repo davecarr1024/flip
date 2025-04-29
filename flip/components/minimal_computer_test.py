@@ -2,6 +2,16 @@ from flip.bytes import Byte, Word
 from flip.components import MinimalComputer
 
 
+def test_statuses() -> None:
+    assert set(MinimalComputer().statuses_by_path.keys()) == {
+        "alu.carry_out",
+        "alu.half_carry",
+        "alu.negative",
+        "alu.overflow",
+        "alu.zero",
+    }
+
+
 def test_load_data() -> None:
     assert dict(MinimalComputer(data={Word(0x0000): Byte(0x01)}).memory) == {
         Word(0x0000): Byte(0x01)
@@ -98,3 +108,37 @@ def test_lda_zero_page() -> None:
 def test_jmp_absolute() -> None:
     computer = MinimalComputer.program_builder().jmp(0xBEEF).at(0xBEEF).hlt().run()
     assert computer.program_counter.value == Word(0xBEF0)
+
+
+def test_adc_immediate() -> None:
+    computer = MinimalComputer.program_builder().lda(0x01).adc(0x02).hlt().run()
+    assert computer.a.value == Byte(0x03)
+
+
+def test_adc_absolute() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .lda(0x01)
+        .adc("label")
+        .hlt()
+        .label("label")
+        .data(Byte(0x02))
+        .run()
+    )
+    assert computer.a.value == Byte(0x03)
+
+
+def test_sec() -> None:
+    computer = MinimalComputer()
+    computer.alu.carry_in = False
+    assert not computer.alu.carry_in
+    computer.run(MinimalComputer.program_builder().sec().hlt())
+    assert computer.alu.carry_in
+
+
+def test_clc() -> None:
+    computer = MinimalComputer()
+    computer.alu.carry_in = True
+    assert computer.alu.carry_in
+    computer.run(MinimalComputer.program_builder().clc().hlt())
+    assert not computer.alu.carry_in
