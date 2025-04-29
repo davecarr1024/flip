@@ -192,3 +192,16 @@ def test_duplicate_child_names() -> None:
     c2 = Component(name="c")
     with pytest.raises(Component.ValidationError):
         Component(name="p", children=[c1, c2])
+
+
+def test_set_enable_logging() -> None:
+    c = Component(name="c")
+    assert not c.enable_logging
+    with c._log_context("test_context"):  # type:ignore
+        c._log("test")  # type:ignore
+    c.enable_logging = True
+    assert c.enable_logging
+    with c._log_context("test_context"):  # type:ignore
+        c._log("test")  # type:ignore
+    c.enable_logging = False
+    assert not c.enable_logging

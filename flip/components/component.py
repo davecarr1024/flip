@@ -20,6 +20,7 @@ class Component(Validatable):
         self.__name = name or self.__class__.__name__
         self.__parent: Optional[Component] = None
         self.__children: frozenset[Component] = frozenset()
+        self.__enable_logging: bool = False
         with self._pause_validation():
             if parent is not None:
                 self.parent = parent
@@ -214,6 +215,14 @@ class Component(Validatable):
 
     __log_context = list[str]()
 
+    @property
+    def enable_logging(self) -> bool:
+        return self.__enable_logging
+
+    @enable_logging.setter
+    def enable_logging(self, enable_logging: bool) -> None:
+        self.__enable_logging = enable_logging
+
     @final
     @contextmanager
     def _log_context(self, message: str) -> Iterator[None]:
@@ -225,6 +234,8 @@ class Component(Validatable):
 
     @final
     def _log(self, message: str) -> None:
+        if not self.enable_logging:
+            return
         for tabs, context in enumerate(self.__log_context):
             print(f'{"  " * tabs}{context}')
         print(f'{"  "*len(self.__log_context)}{message}')
