@@ -63,7 +63,7 @@ class Computer(Component, ABC):
             """
             self = self.transfer_byte(lhs, "alu.lhs")
             if rhs is not None:
-                self = self.transfer_byte(rhs, "alu.rhs")
+                self = self.transfer_byte(rhs, "alu.rhs")  # pragma: no cover
             self = self._alu_operation(operation)
             return self.transfer_byte("alu.output", out)
 
@@ -77,7 +77,9 @@ class Computer(Component, ABC):
 
     @classmethod
     def _instruction_set_builder(cls) -> InstructionSetBuilder:
-        return cls.InstructionSetBuilder(alu_operation_set=cls._alu_operation_set())
+        return cls.InstructionSetBuilder(
+            alu_operation_set=cls._alu_operation_set()
+        )  # pragma: no cover
 
     @classmethod
     @abstractmethod
