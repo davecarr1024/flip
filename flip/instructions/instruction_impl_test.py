@@ -47,3 +47,7 @@ def test_with_step() -> None:
 
 def test_controls() -> None:
     assert ii.controls == {"c1", "c2", "c3"}
+
+
+def test_with_last_step_controls() -> None:
+    assert "f1" in set(list(ii.with_last_step_controls(frozenset({"f1"})))[-1])

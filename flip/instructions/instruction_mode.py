@@ -108,31 +108,30 @@ class InstructionMode(Errorable, Sized, Iterable["instruction_impl.InstructionIm
         mode: AddressingMode,
         opcode: Byte,
         impls: Optional[Iterable["instruction_impl.InstructionImpl"]] = None,
-    ) -> "InstructionMode":
+    ) -> Self:
         return cls(
             mode=mode,
             opcode=opcode,
             _impls=(frozenset(impls) if impls is not None else frozenset()),
         )
 
-    def _with_impls(
-        self, impls: Iterable["instruction_impl.InstructionImpl"]
-    ) -> "InstructionMode":
+    def _with_impls(self, impls: Iterable["instruction_impl.InstructionImpl"]) -> Self:
         return replace(self, _impls=frozenset(impls))
 
-    def with_impls(
-        self, impls: Iterable["instruction_impl.InstructionImpl"]
-    ) -> "InstructionMode":
+    def with_impls(self, impls: Iterable["instruction_impl.InstructionImpl"]) -> Self:
         return self._with_impls(self._impls | frozenset(impls))
 
-    def with_impl(self, impl: "instruction_impl.InstructionImpl") -> "InstructionMode":
+    def with_impl(self, impl: "instruction_impl.InstructionImpl") -> Self:
         return self._with_impls(self._impls | {impl})
 
-    def with_header(self, steps: Iterable["step.Step"]) -> "InstructionMode":
+    def with_header(self, steps: Iterable["step.Step"]) -> Self:
         return self._with_impls(impl.with_header(steps) for impl in self._impls)
 
-    def with_footer(self, steps: Iterable["step.Step"]) -> "InstructionMode":
+    def with_footer(self, steps: Iterable["step.Step"]) -> Self:
         return self._with_impls(impl.with_footer(steps) for impl in self._impls)
+
+    def with_last_step_controls(self, controls: frozenset[str]) -> Self:
+        return self._with_impls(impl.with_last_step_controls(controls) for impl in self)
 
     @property
     def controls(self) -> frozenset[str]:

@@ -57,7 +57,7 @@ class InstructionSet(Sized, Iterable["instruction.Instruction"]):
     def create(
         cls,
         instructions: Optional[Iterable["instruction.Instruction"]] = None,
-    ) -> "InstructionSet":
+    ) -> Self:
         return cls(
             _instructions=(
                 frozenset(instructions) if instructions is not None else frozenset()
@@ -66,17 +66,15 @@ class InstructionSet(Sized, Iterable["instruction.Instruction"]):
 
     def _with_instructions(
         self, instructions: Iterable["instruction.Instruction"]
-    ) -> "InstructionSet":
+    ) -> Self:
         return replace(self, _instructions=frozenset(instructions))
 
     def with_instructions(
         self, instructions: Iterable["instruction.Instruction"]
-    ) -> "InstructionSet":
+    ) -> Self:
         return self._with_instructions(self._instructions | frozenset(instructions))
 
-    def with_instruction(
-        self, instruction: "instruction.Instruction"
-    ) -> "InstructionSet":
+    def with_instruction(self, instruction: "instruction.Instruction") -> Self:
         return self._with_instructions(self._instructions | {instruction})
 
     @staticmethod
@@ -93,15 +91,21 @@ class InstructionSet(Sized, Iterable["instruction.Instruction"]):
     def _normalize_steps(steps: Iterable[Step | list[str] | str]) -> list[Step]:
         return list(map(InstructionSet._normalize_step, steps))
 
-    def with_header(self, *steps: Step | list[str] | str) -> "InstructionSet":
+    def with_header(self, *steps: Step | list[str] | str) -> Self:
         return self._with_instructions(
             instruction.with_header(self._normalize_steps(steps))
             for instruction in self._instructions
         )
 
-    def with_footer(self, *steps: Step | list[str] | str) -> "InstructionSet":
+    def with_footer(self, *steps: Step | list[str] | str) -> Self:
         return self._with_instructions(
             instruction.with_footer(self._normalize_steps(steps))
+            for instruction in self._instructions
+        )
+
+    def with_last_step_controls(self, *controls: str) -> Self:
+        return self._with_instructions(
+            instruction.with_last_step_controls(frozenset[str](controls))
             for instruction in self._instructions
         )
 

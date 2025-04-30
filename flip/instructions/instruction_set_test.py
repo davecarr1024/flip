@@ -586,3 +586,10 @@ def test_build_instruction_during_mode() -> None:
             ),
         }
     )
+
+
+def test_with_last_step_controls() -> None:
+    for instruction in is_.with_last_step_controls("f1"):
+        for mode in instruction:
+            for impl in mode:
+                assert "f1" in set(list(impl)[-1])

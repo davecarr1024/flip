@@ -124,3 +124,9 @@ def test_statuses() -> None:
 
 def test_max_num_steps() -> None:
     assert i.max_num_steps == 3
+
+
+def test_with_last_step_controls() -> None:
+    for mode in i.with_last_step_controls(frozenset({"f1"})):
+        for impl in mode:
+            assert "f1" in set(list(impl)[-1])

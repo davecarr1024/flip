@@ -77,3 +77,8 @@ def test_max_num_steps_empty() -> None:
         _ = InstructionMode.create(
             mode=AddressingMode.IMMEDIATE, opcode=Byte(0x01)
         ).max_num_steps
+
+
+def test_with_last_step_controls() -> None:
+    for impl in im.with_last_step_controls(frozenset({"f1"})):
+        assert "f1" in set(list(impl)[-1])

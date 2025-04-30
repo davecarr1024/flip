@@ -153,8 +153,8 @@ class InstructionImpl(Sized, Iterable["step.Step"]):
             ]
         ] = None,
         statuses: Optional[Mapping[str, bool]] = None,
-    ) -> "InstructionImpl":
-        return InstructionImpl(
+    ) -> Self:
+        return cls(
             _statuses=cls._StatusEntrySet.encode(statuses),
             _steps=tuple(steps) if steps is not None else tuple(),
         )
@@ -163,20 +163,32 @@ class InstructionImpl(Sized, Iterable["step.Step"]):
     def statuses(self) -> Mapping[str, bool]:
         return self._statuses.decode()
 
-    def _with_steps(self, steps: Iterable["step.Step"]) -> "InstructionImpl":
+    def _with_steps(self, steps: Iterable["step.Step"]) -> Self:
         return replace(self, _steps=tuple(steps))
 
-    def with_steps(self, steps: Iterable["step.Step"]) -> "InstructionImpl":
+    def with_steps(self, steps: Iterable["step.Step"]) -> Self:
         return self._with_steps(self._steps + tuple(steps))
 
-    def with_header(self, steps: Iterable["step.Step"]) -> "InstructionImpl":
+    def with_step(self, step: "step.Step") -> Self:
+        return self.with_steps([step])
+
+    def with_header(self, steps: Iterable["step.Step"]) -> Self:
         return self._with_steps(tuple(steps) + self._steps)
 
-    def with_footer(self, steps: Iterable["step.Step"]) -> "InstructionImpl":
+    def with_footer(self, steps: Iterable["step.Step"]) -> Self:
         return self._with_steps(self._steps + tuple(steps))
 
-    def with_step(self, step: "step.Step") -> "InstructionImpl":
-        return self._with_steps(self._steps + (step,))
+    def with_last_step_controls(self, controls: frozenset[str]) -> Self:
+        return (
+            self._with_steps(
+                [
+                    *self._steps[:-1],
+                    self._steps[-1].with_controls(controls),
+                ]
+            )
+            if len(self._steps) > 0
+            else self.with_step(step.Step.create(controls=controls))
+        )
 
     @override
     def __len__(self) -> int:

@@ -108,6 +108,9 @@ class Instruction(Sized, Iterable["instruction_mode.InstructionMode"]):
     def with_footer(self, steps: Iterable["step.Step"]) -> Self:
         return self._with_modes(mode.with_footer(steps) for mode in self._modes)
 
+    def with_last_step_controls(self, controls: frozenset[str]) -> Self:
+        return self._with_modes(mode.with_last_step_controls(controls) for mode in self)
+
     @property
     def controls(self) -> frozenset[str]:
         """The set of all controls used by any mode of this instruction."""

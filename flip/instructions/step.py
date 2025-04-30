@@ -3,6 +3,13 @@ from typing import Iterable, Iterator, Optional, Self, Sized, Union, overload, o
 
 from flip.instructions.addressing_mode import AddressingMode
 
+type _StrCollection = Union[
+    set[str],
+    frozenset[str],
+    list[str],
+    tuple[str, ...],
+]
+
 
 @dataclass(frozen=True)
 class Step(Sized, Iterable[str]):
@@ -76,7 +83,7 @@ class Step(Sized, Iterable[str]):
     @classmethod
     def create(
         cls,
-        controls: Optional[set[str] | frozenset[str] | list[str]] = None,
+        controls: Optional[_StrCollection] = None,
     ) -> "Step":
         return cls(
             _controls=frozenset(controls) if controls is not None else frozenset()
@@ -90,13 +97,13 @@ class Step(Sized, Iterable[str]):
     def __iter__(self) -> Iterator[str]:
         return iter(self._controls)
 
-    def _with_controls(self, controls: Iterable[str]) -> "Step":
+    def _with_controls(self, controls: _StrCollection) -> "Step":
         return replace(self, _controls=frozenset(controls))
 
     def with_control(self, control: str) -> "Step":
         return self._with_controls(self._controls | {control})
 
-    def with_controls(self, controls: Iterable[str]) -> "Step":
+    def with_controls(self, controls: _StrCollection) -> "Step":
         return self._with_controls(self._controls | frozenset(controls))
 
 
