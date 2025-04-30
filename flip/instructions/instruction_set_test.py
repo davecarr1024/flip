@@ -124,3 +124,465 @@ def test_max_num_steps() -> None:
 
 def test_instructions_by_name() -> None:
     assert is_.instructions_by_name == {"i1": i1, "i2": i2}
+
+
+def test_build_empty_set() -> None:
+    assert InstructionSet.Builder().build() == InstructionSet()
+
+
+def test_build_empty_instruction() -> None:
+    assert InstructionSet.Builder().instruction("i").build() == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+            )
+        },
+    )
+
+
+def test_build_empty_mode() -> None:
+    assert (
+        InstructionSet.Builder().instruction("i").mode(AddressingMode.IMMEDIATE).build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.IMMEDIATE,
+                        opcode=Byte(0x00),
+                    )
+                },
+            ),
+        }
+    )
+
+
+def test_build_empty_mode_str() -> None:
+    assert (
+        InstructionSet.Builder().instruction("i").mode("absolute").build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.ABSOLUTE,
+                        opcode=Byte(0x00),
+                    )
+                },
+            ),
+        }
+    )
+
+
+def test_build_empty_impl() -> None:
+    assert InstructionSet.Builder().instruction("i").mode(
+        "absolute"
+    ).impl().build() == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.ABSOLUTE,
+                        opcode=Byte(0x00),
+                        impls={
+                            InstructionImpl.create(),
+                        },
+                    )
+                },
+            ),
+        }
+    )
+
+
+def test_build_impl_with_statuses() -> None:
+    assert InstructionSet.Builder().instruction("i").mode("absolute").impl(
+        a=True, b=False
+    ).build() == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.ABSOLUTE,
+                        opcode=Byte(0x00),
+                        impls={
+                            InstructionImpl.create(
+                                statuses={
+                                    "a": True,
+                                    "b": False,
+                                },
+                            ),
+                        },
+                    )
+                },
+            ),
+        }
+    )
+
+
+def test_build_impl_with_empty_step() -> None:
+    assert (
+        InstructionSet.Builder().instruction("i").mode("absolute").impl().step().build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.ABSOLUTE,
+                        opcode=Byte(0x00),
+                        impls={
+                            InstructionImpl.create(
+                                steps=[
+                                    Step.create(),
+                                ],
+                            ),
+                        },
+                    )
+                },
+            )
+        }
+    )
+
+
+def test_build_impl_with_step_directly() -> None:
+    assert (
+        InstructionSet.Builder()
+        .instruction("i")
+        .mode("absolute")
+        .impl()
+        .step("c1")
+        .build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.ABSOLUTE,
+                        opcode=Byte(0x00),
+                        impls={
+                            InstructionImpl.create(
+                                steps=[
+                                    Step.create({"c1"}),
+                                ],
+                            ),
+                        },
+                    )
+                },
+            )
+        }
+    )
+
+
+def test_build_generate_opcodes() -> None:
+    assert (
+        InstructionSet.Builder()
+        .instruction("i")
+        .mode("absolute")
+        .step("c1")
+        .mode("immediate")
+        .step("c2")
+        .instruction("j")
+        .mode("absolute")
+        .impl(s1=True)
+        .step("c3")
+        .impl(s2=True)
+        .step("c4")
+        .build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.ABSOLUTE,
+                        opcode=Byte(0x00),
+                        impls={
+                            InstructionImpl.create(
+                                steps=[
+                                    Step.create({"c1"}),
+                                ],
+                            ),
+                        },
+                    ),
+                    InstructionMode.create(
+                        mode=AddressingMode.IMMEDIATE,
+                        opcode=Byte(0x01),
+                        impls={
+                            InstructionImpl.create(
+                                steps=[
+                                    Step.create({"c2"}),
+                                ],
+                            ),
+                        },
+                    ),
+                },
+            ),
+            Instruction.create(
+                name="j",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.ABSOLUTE,
+                        opcode=Byte(0x02),
+                        impls={
+                            InstructionImpl.create(
+                                statuses={"s1": True},
+                                steps=[
+                                    Step.create({"c3"}),
+                                ],
+                            ),
+                            InstructionImpl.create(
+                                statuses={"s2": True},
+                                steps=[
+                                    Step.create({"c4"}),
+                                ],
+                            ),
+                        },
+                    ),
+                },
+            ),
+        }
+    )
+
+
+def test_build_step_from_controls() -> None:
+    assert (
+        InstructionSet.Builder()
+        .instruction("i")
+        .mode("absolute")
+        .step("c1", "c2")
+        .step()
+        .control("c3")
+        .control("c4")
+        .step()
+        .control("c5")
+        .step("c6")
+        .build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.ABSOLUTE,
+                        opcode=Byte(0x00),
+                        impls={
+                            InstructionImpl.create(
+                                steps=[
+                                    Step.create({"c1", "c2"}),
+                                    Step.create({"c3", "c4"}),
+                                    Step.create({"c5"}),
+                                    Step.create({"c6"}),
+                                ],
+                            ),
+                        },
+                    ),
+                },
+            ),
+        }
+    )
+
+
+def test_build_impl_during_step() -> None:
+    assert (
+        InstructionSet.Builder()
+        .instruction("i")
+        .mode("absolute")
+        .impl(s1=True)
+        .step()
+        .control("c1")
+        .impl(s2=False)
+        .step()
+        .control("c2")
+        .build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.ABSOLUTE,
+                        opcode=Byte(0x00),
+                        impls={
+                            InstructionImpl.create(
+                                statuses={"s1": True},
+                                steps=[
+                                    Step.create({"c1"}),
+                                ],
+                            ),
+                            InstructionImpl.create(
+                                statuses={"s2": False},
+                                steps=[
+                                    Step.create({"c2"}),
+                                ],
+                            ),
+                        },
+                    ),
+                },
+            ),
+        }
+    )
+
+
+def test_build_mode_during_step() -> None:
+    assert (
+        InstructionSet.Builder()
+        .instruction("i")
+        .mode("absolute")
+        .step()
+        .control("c1")
+        .mode("immediate")
+        .step()
+        .control("c2")
+        .build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.ABSOLUTE,
+                        opcode=Byte(0x00),
+                        impls={
+                            InstructionImpl.create(
+                                steps=[
+                                    Step.create({"c1"}),
+                                ],
+                            ),
+                        },
+                    ),
+                    InstructionMode.create(
+                        mode=AddressingMode.IMMEDIATE,
+                        opcode=Byte(0x01),
+                        impls={
+                            InstructionImpl.create(
+                                steps=[
+                                    Step.create({"c2"}),
+                                ],
+                            ),
+                        },
+                    ),
+                },
+            ),
+        }
+    )
+
+
+def test_build_instruction_during_step() -> None:
+    assert (
+        InstructionSet.Builder()
+        .instruction("i")
+        .mode("absolute")
+        .step()
+        .control("c1")
+        .instruction("j")
+        .mode("immediate")
+        .step()
+        .control("c2")
+        .build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.ABSOLUTE,
+                        opcode=Byte(0x00),
+                        impls={
+                            InstructionImpl.create(
+                                steps=[
+                                    Step.create({"c1"}),
+                                ],
+                            ),
+                        },
+                    ),
+                },
+            ),
+            Instruction.create(
+                name="j",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.IMMEDIATE,
+                        opcode=Byte(0x01),
+                        impls={
+                            InstructionImpl.create(
+                                steps=[
+                                    Step.create({"c2"}),
+                                ],
+                            ),
+                        },
+                    ),
+                },
+            ),
+        }
+    )
+
+
+def test_build_instruction_during_instruction() -> None:
+    assert (
+        InstructionSet.Builder().instruction("i").instruction("j").build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+            ),
+            Instruction.create(
+                name="j",
+            ),
+        }
+    )
+
+
+def test_build_mode_during_mode() -> None:
+    assert (
+        InstructionSet.Builder()
+        .instruction("i")
+        .mode("absolute")
+        .mode("immediate")
+        .build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.ABSOLUTE,
+                        opcode=Byte(0x00),
+                    ),
+                    InstructionMode.create(
+                        mode=AddressingMode.IMMEDIATE,
+                        opcode=Byte(0x01),
+                    ),
+                },
+            )
+        }
+    )
+
+
+def test_build_instruction_during_mode() -> None:
+    assert (
+        InstructionSet.Builder()
+        .instruction("i")
+        .mode("absolute")
+        .instruction("j")
+        .build()
+    ) == InstructionSet.create(
+        instructions={
+            Instruction.create(
+                name="i",
+                modes={
+                    InstructionMode.create(
+                        mode=AddressingMode.ABSOLUTE,
+                        opcode=Byte(0x00),
+                    ),
+                },
+            ),
+            Instruction.create(
+                name="j",
+            ),
+        }
+    )

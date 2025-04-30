@@ -46,7 +46,10 @@ im3 = InstructionMode.create(
     opcode=Byte(0x03),
     impls={
         InstructionImpl.create(
-            steps={Step.create({"c7", "c8"}), Step.create({"c8", "c9"})},
+            steps=[
+                Step.create({"c7", "c8"}),
+                Step.create({"c8", "c9"}),
+            ],
         ),
     },
 )

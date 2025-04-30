@@ -1,29 +1,102 @@
-from dataclasses import dataclass, replace
-from typing import Iterable, Iterator, Optional, Sized, override
+from dataclasses import dataclass, field, replace
+from typing import Iterable, Iterator, Optional, Self, Sized, Union, overload, override
 
 from flip.bytes import Byte
 from flip.core import Error, Errorable
 from flip.instructions.addressing_mode import AddressingMode
-from flip.instructions.instruction_impl import InstructionImpl
-from flip.instructions.step import Step
 
 
 @dataclass(frozen=True)
-class InstructionMode(Errorable, Sized, Iterable[InstructionImpl]):
+class InstructionMode(Errorable, Sized, Iterable["instruction_impl.InstructionImpl"]):
     class Error(Error): ...
 
     class ValueError(Error, ValueError): ...
 
+    @dataclass(frozen=True)
+    class Builder:
+        instruction_builder: "instruction.Instruction.Builder" = field(
+            repr=False, hash=False, compare=False
+        )
+        _mode: AddressingMode | str
+        _impls: frozenset["instruction_impl.InstructionImpl"] = field(
+            default_factory=lambda: frozenset[instruction_impl.InstructionImpl]()
+        )
+
+        @property
+        def opcodes(self) -> frozenset[Byte]:
+            return self.instruction_builder.opcodes
+
+        def next_opcode(self) -> Byte:
+            return Byte(len(self.opcodes))
+
+        def _with_impls(
+            self, impls: Iterable["instruction_impl.InstructionImpl"]
+        ) -> Self:
+            return replace(self, _impls=frozenset(impls))
+
+        def with_impl(self, impl: "instruction_impl.InstructionImpl") -> Self:
+            return self._with_impls(self._impls | {impl})
+
+        def impl(self, **statuses: bool) -> "instruction_impl.InstructionImpl.Builder":
+            return instruction_impl.InstructionImpl.Builder.create(
+                instruction_mode_builder=self,
+                statuses=statuses,
+            )
+
+        @overload
+        def step(
+            self, control: str, *controls: str
+        ) -> "instruction_impl.InstructionImpl.Builder": ...
+
+        @overload
+        def step(self) -> "step.Step.Builder": ...
+
+        def step(
+            self,
+            control: Optional[str] = None,
+            *controls: str,
+        ) -> Union[
+            "step.Step.Builder",
+            "instruction_impl.InstructionImpl.Builder",
+        ]:
+            return self.impl().step(*[control, *controls])
+
+        def end_mode(self) -> "instruction.Instruction.Builder":
+            match self._mode:
+                case AddressingMode():
+                    mode = self._mode
+                case str():
+                    mode = AddressingMode[self._mode.upper()]
+            return self.instruction_builder.with_mode(
+                InstructionMode.create(
+                    mode=mode,
+                    impls=self._impls,
+                    opcode=self.next_opcode(),
+                )
+            )
+
+        def mode(self, mode: AddressingMode | str) -> "InstructionMode.Builder":
+            return self.end_mode().mode(mode)
+
+        def end_instruction(self) -> "instruction_set.InstructionSet.Builder":
+            return self.end_mode().end_instruction()
+
+        def instruction(self, name: str) -> "instruction.Instruction.Builder":
+            return self.end_instruction().instruction(name)
+
+        def build(self) -> "instruction_set.InstructionSet":
+            return self.end_instruction().build()
+
     mode: AddressingMode
     opcode: Byte
-    _impls: frozenset[InstructionImpl]
+    _impls: frozenset["instruction_impl.InstructionImpl"]
 
     @override
     def __len__(self) -> int:
         return len(self._impls)
 
     @override
-    def __iter__(self) -> Iterator[InstructionImpl]:
+    def __iter__(self) -> Iterator["instruction_impl.InstructionImpl"]:
         return iter(self._impls)
 
     @classmethod
@@ -31,7 +104,7 @@ class InstructionMode(Errorable, Sized, Iterable[InstructionImpl]):
         cls,
         mode: AddressingMode,
         opcode: Byte,
-        impls: Optional[Iterable[InstructionImpl]] = None,
+        impls: Optional[Iterable["instruction_impl.InstructionImpl"]] = None,
     ) -> "InstructionMode":
         return cls(
             mode=mode,
@@ -39,19 +112,23 @@ class InstructionMode(Errorable, Sized, Iterable[InstructionImpl]):
             _impls=(frozenset(impls) if impls is not None else frozenset()),
         )
 
-    def _with_impls(self, impls: Iterable[InstructionImpl]) -> "InstructionMode":
+    def _with_impls(
+        self, impls: Iterable["instruction_impl.InstructionImpl"]
+    ) -> "InstructionMode":
         return replace(self, _impls=frozenset(impls))
 
-    def with_impls(self, impls: Iterable[InstructionImpl]) -> "InstructionMode":
+    def with_impls(
+        self, impls: Iterable["instruction_impl.InstructionImpl"]
+    ) -> "InstructionMode":
         return self._with_impls(self._impls | frozenset(impls))
 
-    def with_impl(self, impl: InstructionImpl) -> "InstructionMode":
+    def with_impl(self, impl: "instruction_impl.InstructionImpl") -> "InstructionMode":
         return self._with_impls(self._impls | {impl})
 
-    def with_header(self, steps: Iterable[Step]) -> "InstructionMode":
+    def with_header(self, steps: Iterable["step.Step"]) -> "InstructionMode":
         return self._with_impls(impl.with_header(steps) for impl in self._impls)
 
-    def with_footer(self, steps: Iterable[Step]) -> "InstructionMode":
+    def with_footer(self, steps: Iterable["step.Step"]) -> "InstructionMode":
         return self._with_impls(impl.with_footer(steps) for impl in self._impls)
 
     @property
@@ -72,3 +149,11 @@ class InstructionMode(Errorable, Sized, Iterable[InstructionImpl]):
                 self.ValueError,
             )
         return max(map(len, self))
+
+
+from flip.instructions import (
+    instruction,
+    instruction_impl,
+    instruction_set,
+    step,
+)

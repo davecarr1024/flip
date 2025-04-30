@@ -1,28 +1,59 @@
 from dataclasses import dataclass, field, replace
-from typing import Iterable, Iterator, Mapping, Optional, Sized, override
+from typing import Iterable, Iterator, Mapping, Optional, Self, Sized, override
 
-from flip.instructions.instruction import Instruction
+from flip.bytes import Byte
 from flip.instructions.step import Step
 
 
 @dataclass(frozen=True)
-class InstructionSet(Sized, Iterable[Instruction]):
-    _instructions: frozenset[Instruction] = field(
-        default_factory=frozenset[Instruction]
+class InstructionSet(Sized, Iterable["instruction.Instruction"]):
+    _instructions: frozenset["instruction.Instruction"] = field(
+        default_factory=frozenset["instruction.Instruction"]
     )
+
+    @dataclass(frozen=True)
+    class Builder:
+        _instructions: frozenset["instruction.Instruction"] = field(
+            default_factory=lambda: frozenset[instruction.Instruction](),
+            repr=False,
+            hash=False,
+            compare=False,
+        )
+
+        @property
+        def opcodes(self) -> frozenset[Byte]:
+            return frozenset[Byte]().union(
+                *[instruction.opcodes for instruction in self._instructions]
+            )
+
+        def _with_instructions(
+            self, instructions: Iterable["instruction.Instruction"]
+        ) -> Self:
+            return replace(self, _instructions=frozenset(instructions))
+
+        def with_instruction(self, instruction: "instruction.Instruction") -> Self:
+            return self._with_instructions(self._instructions | {instruction})
+
+        def instruction(self, name: str) -> "instruction.Instruction.Builder":
+            return instruction.Instruction.Builder(
+                name=name, instruction_set_builder=self
+            )
+
+        def build(self) -> "InstructionSet":
+            return InstructionSet.create(instructions=self._instructions)
 
     @override
     def __len__(self) -> int:
         return len(self._instructions)
 
     @override
-    def __iter__(self) -> Iterator[Instruction]:
+    def __iter__(self) -> Iterator["instruction.Instruction"]:
         return iter(self._instructions)
 
     @classmethod
     def create(
         cls,
-        instructions: Optional[Iterable[Instruction]] = None,
+        instructions: Optional[Iterable["instruction.Instruction"]] = None,
     ) -> "InstructionSet":
         return cls(
             _instructions=(
@@ -31,16 +62,18 @@ class InstructionSet(Sized, Iterable[Instruction]):
         )
 
     def _with_instructions(
-        self, instructions: Iterable[Instruction]
+        self, instructions: Iterable["instruction.Instruction"]
     ) -> "InstructionSet":
         return replace(self, _instructions=frozenset(instructions))
 
     def with_instructions(
-        self, instructions: Iterable[Instruction]
+        self, instructions: Iterable["instruction.Instruction"]
     ) -> "InstructionSet":
         return self._with_instructions(self._instructions | frozenset(instructions))
 
-    def with_instruction(self, instruction: Instruction) -> "InstructionSet":
+    def with_instruction(
+        self, instruction: "instruction.Instruction"
+    ) -> "InstructionSet":
         return self._with_instructions(self._instructions | {instruction})
 
     @staticmethod
@@ -89,8 +122,8 @@ class InstructionSet(Sized, Iterable[Instruction]):
         return instruction_set_builder.InstructionSetBuilder()
 
     @property
-    def instructions_by_name(self) -> Mapping[str, Instruction]:
+    def instructions_by_name(self) -> Mapping[str, "instruction.Instruction"]:
         return {instruction.name: instruction for instruction in self._instructions}
 
 
-from flip.instructions import instruction_set_builder
+from flip.instructions import instruction, instruction_set_builder
