@@ -68,6 +68,9 @@ class Instruction(Sized, Iterable["instruction_mode.InstructionMode"]):
         def build(self) -> "instruction_set.InstructionSet":
             return self.end_instruction().build()
 
+        def header(self) -> "header_builder.HeaderBuilder":
+            return self.end_instruction().header()
+
     @classmethod
     def create_simple(
         cls,
@@ -130,4 +133,10 @@ class Instruction(Sized, Iterable["instruction_mode.InstructionMode"]):
         return frozenset[Byte](mode.opcode for mode in self._modes)
 
 
-from flip.instructions import instruction_impl, instruction_mode, instruction_set, step
+from flip.instructions import (
+    header_builder,
+    instruction_impl,
+    instruction_mode,
+    instruction_set,
+    step,
+)

@@ -1,4 +1,5 @@
 from .addressing_mode import AddressingMode as AddressingMode
+from .header_builder import HeaderBuilder as HeaderBuilder
 from .instruction import Instruction as Instruction
 from .instruction_impl import InstructionImpl as InstructionImpl
 from .instruction_mode import InstructionMode as InstructionMode

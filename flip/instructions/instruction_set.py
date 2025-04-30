@@ -39,6 +39,9 @@ class InstructionSet(Sized, Iterable["instruction.Instruction"]):
                 name=name, instruction_set_builder=self
             )
 
+        def header(self) -> "header_builder.HeaderBuilder":
+            return header_builder.HeaderBuilder(instruction_set=self.build())
+
         def build(self) -> "InstructionSet":
             return InstructionSet.create(instructions=self._instructions)
 
@@ -126,4 +129,4 @@ class InstructionSet(Sized, Iterable["instruction.Instruction"]):
         return {instruction.name: instruction for instruction in self._instructions}
 
 
-from flip.instructions import instruction, instruction_set_builder
+from flip.instructions import header_builder, instruction, instruction_set_builder

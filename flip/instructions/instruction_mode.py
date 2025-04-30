@@ -87,6 +87,9 @@ class InstructionMode(Errorable, Sized, Iterable["instruction_impl.InstructionIm
         def build(self) -> "instruction_set.InstructionSet":
             return self.end_instruction().build()
 
+        def header(self) -> "header_builder.HeaderBuilder":
+            return self.end_instruction().header()
+
     mode: AddressingMode
     opcode: Byte
     _impls: frozenset["instruction_impl.InstructionImpl"]
@@ -152,6 +155,7 @@ class InstructionMode(Errorable, Sized, Iterable["instruction_impl.InstructionIm
 
 
 from flip.instructions import (
+    header_builder,
     instruction,
     instruction_impl,
     instruction_set,

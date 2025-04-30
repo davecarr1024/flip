@@ -135,6 +135,9 @@ class InstructionImpl(Sized, Iterable["step.Step"]):
         def build(self) -> "instruction_set.InstructionSet":
             return self.end_instruction().build()
 
+        def header(self) -> "header_builder.HeaderBuilder":
+            return self.end_instruction().header()
+
     _statuses: _StatusEntrySet = field(
         default_factory=lambda: InstructionImpl._StatusEntrySet()
     )
@@ -189,4 +192,10 @@ class InstructionImpl(Sized, Iterable["step.Step"]):
         return frozenset[str]().union(*self._steps)
 
 
-from flip.instructions import instruction, instruction_mode, instruction_set, step
+from flip.instructions import (
+    header_builder,
+    instruction,
+    instruction_mode,
+    instruction_set,
+    step,
+)

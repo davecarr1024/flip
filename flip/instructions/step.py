@@ -70,6 +70,9 @@ class Step(Sized, Iterable[str]):
         def build(self) -> "instruction_set.InstructionSet":
             return self.end_instruction().build()
 
+        def header(self) -> "header_builder.HeaderBuilder":
+            return self.end_instruction().header()
+
     @classmethod
     def create(
         cls,
@@ -98,6 +101,7 @@ class Step(Sized, Iterable[str]):
 
 
 from flip.instructions import (
+    header_builder,
     instruction,
     instruction_impl,
     instruction_mode,
