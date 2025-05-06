@@ -136,13 +136,13 @@ class InstructionSet(Sized, Iterable["instruction.Instruction"]):
         """The maximum number of steps in any instruction in the set."""
         return max(instruction.max_num_steps for instruction in self)
 
-    @staticmethod
-    def builder() -> "instruction_set_builder.InstructionSetBuilder":
-        return instruction_set_builder.InstructionSetBuilder()
+    @classmethod
+    def builder(cls) -> "InstructionSet.Builder":
+        return cls.Builder()
 
     @property
     def instructions_by_name(self) -> Mapping[str, "instruction.Instruction"]:
         return {instruction.name: instruction for instruction in self._instructions}
 
 
-from flip.instructions import header_builder, instruction, instruction_set_builder
+from flip.instructions import header_builder, instruction
