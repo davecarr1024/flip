@@ -205,3 +205,14 @@ def test_set_enable_logging() -> None:
         c._log("test")  # type:ignore
     c.enable_logging = False
     assert not c.enable_logging
+
+
+def test_setting_enable_logging_sets_parent_enable_logging() -> None:
+    c = Component(name="c")
+    p = Component(name="p", children=[c])
+    c.enable_logging = True
+    assert c.enable_logging
+    assert p.enable_logging
+    c.enable_logging = False
+    assert not p.enable_logging
+    assert not c.enable_logging

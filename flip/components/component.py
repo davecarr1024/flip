@@ -222,6 +222,8 @@ class Component(Validatable):
     @enable_logging.setter
     def enable_logging(self, enable_logging: bool) -> None:
         self.__enable_logging = enable_logging
+        if self.parent is not None:
+            self.parent.enable_logging = enable_logging
 
     @final
     @contextmanager

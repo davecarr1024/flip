@@ -3,6 +3,7 @@ from typing import Optional, override
 from flip.components.bus import Bus
 from flip.components.component import Component
 from flip.components.controller.assembler import Assembler
+from flip.components.controller.status_register import StatusRegister
 from flip.components.counter import Counter
 from flip.components.register import Register
 from flip.instructions import InstructionSet
@@ -23,6 +24,7 @@ class Controller(Component):
         bus: Bus,
         name: Optional[str] = None,
         parent: Optional[Component] = None,
+        status_format: Optional[StatusRegister.Format] = None,
     ) -> None:
         super().__init__(name=name, parent=parent)
         self.__step_counter = Counter(
@@ -38,6 +40,16 @@ class Controller(Component):
         self.__instruction_memory = Assembler(
             instruction_set=instruction_set,
         ).assemble()
+        self.__status = StatusRegister(
+            name="status",
+            parent=self,
+            bus=bus,
+            format=status_format,
+        )
+
+    @property
+    def status(self) -> StatusRegister:
+        return self.__status
 
     @override
     def _tick_control(self) -> None:
@@ -48,7 +60,8 @@ class Controller(Component):
                     f"Instruction status {status_path} not found in root statuses.",
                     self.MissingStatusError,
                 )
-        statuses = {status.path: status.value for status in self.root.statuses}
+        # statuses = {status.path: status.value for status in self.root.statuses}
+        statuses = self.__status.status_values
         step_index = self.__step_counter.value
         control_paths = self.__instruction_memory.get(
             opcode=opcode,

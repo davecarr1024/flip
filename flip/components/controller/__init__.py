@@ -6,3 +6,4 @@ from .instruction_memory_format import (
     InstructionMemoryFormat as InstructionMemoryFormat,
 )
 from .status_mapping import StatusMapping as StatusMapping
+from .status_register import StatusRegister as StatusRegister

@@ -3,6 +3,7 @@ import pytest
 from flip.bytes import Byte
 from flip.components import Bus, Component, Register, Status
 from flip.components.controller import Controller
+from flip.components.controller.status_register import StatusRegister
 from flip.instructions import (
     AddressingMode,
     Instruction,
@@ -18,7 +19,7 @@ def test_controller() -> None:
     # register a to register x iff tax_enable is True
     root = Component()
     bus = Bus(name="bus", parent=root)
-    Controller(
+    controller = Controller(
         name="controller",
         parent=root,
         bus=bus,
@@ -59,6 +60,11 @@ def test_controller() -> None:
                 )
             }
         ),
+        status_format=StatusRegister.Format(
+            {
+                "tax_enable": 0,
+            }
+        ),
     )
     a = Register(
         name="a",
@@ -91,6 +97,10 @@ def test_controller() -> None:
     assert tax_enable.value is True
     assert a.value == Byte(0x01)
     assert x.value == Byte(0x00)
+
+    # latch the status register: a = 0x01, x = 0x00, tax_enable = True
+    controller.status.latch = True
+    root.tick()
 
     # tick the controller: a = 0x01, x = 0x01
     root.tick()
