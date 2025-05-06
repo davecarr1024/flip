@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field, replace
 from typing import (
-    Callable,
     Iterable,
     Iterator,
     Mapping,
@@ -53,9 +52,6 @@ class InstructionSet(Sized, Iterable["instruction.Instruction"]):
 
         def build(self) -> "InstructionSet":
             return InstructionSet.create(instructions=self._instructions)
-
-        def apply(self, f: Callable[[Self], Self]) -> Self:
-            return f(self)
 
     @override
     def __len__(self) -> int:

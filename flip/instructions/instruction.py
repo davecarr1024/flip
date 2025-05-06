@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field, replace
 from typing import (
-    Callable,
     Iterable,
     Iterator,
     Mapping,
@@ -79,9 +78,6 @@ class Instruction(Sized, Iterable["instruction_mode.InstructionMode"]):
 
         def header(self) -> "header_builder.HeaderBuilder":
             return self.end_instruction().header()
-
-        def apply(self, f: Callable[[Self], Self]) -> Self:
-            return f(self)
 
     @classmethod
     def create_simple(
