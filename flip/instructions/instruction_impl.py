@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field, replace
 from typing import (
+    Callable,
     Iterable,
     Iterator,
     Mapping,
@@ -137,6 +138,9 @@ class InstructionImpl(Sized, Iterable["step.Step"]):
 
         def header(self) -> "header_builder.HeaderBuilder":
             return self.end_instruction().header()
+
+        def apply[R](self, f: Callable[[Self], R]) -> R:
+            return f(self)
 
     _statuses: _StatusEntrySet = field(
         default_factory=lambda: InstructionImpl._StatusEntrySet()

@@ -1,189 +1,204 @@
-from dataclasses import dataclass
-from typing import Iterable, Mapping, Optional, Self, override
+from typing import Callable, Iterable, Mapping, Optional, Self, Union, override
 
 from flip.bytes import Byte, Word
-from flip.components.alu.operations import Operation
 from flip.components.component import Component
 from flip.components.computer import Computer
 from flip.components.register import Register
-from flip.instructions import InstructionSet
+from flip.instructions import InstructionImpl, InstructionMode, InstructionSet, Step
 from flip.programs import Program, ProgramBuilder
+
+type _ApplyOperand = Union[
+    InstructionMode.Builder,
+    InstructionImpl.Builder,
+    Step.Builder,
+]
+type _ApplyResult = InstructionImpl.Builder
+type _Apply = Callable[[_ApplyOperand], _ApplyResult]
 
 
 class MinimalComputer(Computer):
-    @dataclass(frozen=True)
-    class InstructionSetBuilder(Computer.InstructionSetBuilder):
-        def load_byte_from_register_address(
-            self,
-            from_: str,
-            to: str,
-        ) -> Self:
-            """Copy a byte from memory at {from} to a byte register.
-
-            {from} is a word register, and the address is read from it.
-            {to} is a byte register, and the byte is written to it.
-            """
-
-            return (
-                self
-                # Copy the address from {from} to memory.address.
-                .transfer_word(from_, "memory.address")
-                # Read the byte from memory to {to}.
-                .transfer_byte("memory", to)
-            )
-
-        def load_byte_at_pc(
-            self,
-            to: str,
-        ) -> Self:
-            """Copy the next byte in memory at {pc} to a byte register.
-
-            {to} is a byte register, and the byte is written to it.
-            """
-
-            return (
-                self
-                # load byte from memory at program counter to {to}
-                .load_byte_from_register_address(
-                    "program_counter",
-                    to,
-                )
-                # increment program counter
-                .step("program_counter.increment")
-            )
-
-        def load_word_at_pc(
-            self,
-            to: str,
-            buffer: str = "arg_buffer.low",
-        ) -> Self:
-            """Copy the two bytes in memory at {pc} to a word register.
-
-            {to} is a word register, and the bytes are written to it.
-            {buffer} is a byte register, and the first byte is written to it.
-            """
-
-            return (
-                self
-                # copy low byte to {buffer}
-                .load_byte_at_pc(buffer)
-                # copy high byte to {to}.high
-                .load_byte_at_pc(f"{to}.high")
-                # copy low byte to {to}.low
-                .transfer_byte(buffer, f"{to}.low")
-            )
-
-        def load_byte_from_pc_address(
-            self,
-            to: str,
-            buffer: str = "arg_buffer.low",
-        ) -> Self:
-            """Indirectly load a byte from memory using the address at {pc}."""
-            return (
-                self
-                # Load address at pc to memory.address
-                .load_word_at_pc("memory.address", buffer=buffer)
-                # Load byte at memory.address to {to}
-                .transfer_byte("memory", to)
-            )
-
-        def _a_alu_operation(self, operation: Operation | str) -> Self:
-            """Define an accumulator-based ALU operation.
-
-            Note that this assumes that alu.rhs is already loaded with
-            the rhs operand (if any) and that alu.lhs comes from the accumulator,
-            and alu.output goes to the accumulator.
-            """
-            return (
-                self.alu_operation(operation=operation, lhs="a", out="a")
-                # # a -> alu.lhs
-                # .transfer_byte("a", "alu.lhs")
-                # # run alu operation
-                # ._alu_operation(operation)
-                # # alu.output -> a
-                # .transfer_byte("alu.output","a")
-            )
-
-        def a_alu_operation_immediate(self, operation: Operation | str) -> Self:
-            """Define an accumulator-based ALU operation with immediate addressing."""
-            return (
-                self
-                # Load next byte at pc to rhs.
-                .load_byte_at_pc("alu.rhs")
-                # Run ALU operation.
-                ._a_alu_operation(operation)
-            )
-
-        def a_alu_operation_absolute(self, operation: Operation | str) -> Self:
-            """Define an accumulator-based ALU operation with absolute addressing."""
-            return (
-                self
-                # Load byte from memory at address at pc to rhs.
-                .load_byte_from_pc_address("alu.rhs")
-                # Run ALU operation.
-                ._a_alu_operation(operation)
-            )
-
-    @classmethod
-    @override
-    def _instruction_set_builder(cls) -> InstructionSetBuilder:
-        return cls.InstructionSetBuilder(alu_operation_set=cls._alu_operation_set())
 
     @override
     @classmethod
     def instruction_set(cls) -> InstructionSet:
+        def transfer_byte(from_: str, to: str) -> _Apply:
+            """Transfer a byte from one byte register to another."""
+            return lambda builder: (
+                builder.step(
+                    f"{from_}.write",
+                    f"{to}.read",
+                )
+            )
+
+        def transfer_word(from_: str, to: str) -> _Apply:
+            """Transfer a word from one word register to another."""
+            return lambda builder: (
+                builder
+                # transfer low byte
+                .apply(
+                    transfer_byte(
+                        f"{from_}.low",
+                        f"{to}.low",
+                    ),
+                )
+                # transfer high byte
+                .apply(
+                    transfer_byte(
+                        f"{from_}.high",
+                        f"{to}.high",
+                    ),
+                )
+            )
+
+        def load_immediate(to: str) -> _Apply:
+            """Load the next program byte into a byte register."""
+            return lambda builder: (
+                builder
+                # load pc to memory.address
+                .apply(
+                    transfer_word(
+                        "program_counter",
+                        "memory.address",
+                    ),
+                )
+                # load byte from memory to {to} and inc pc
+                .step(
+                    "memory.write",
+                    f"{to}.read",
+                    "program_counter.increment",
+                )
+            )
+
+        def load_word_at_pc(to: str, buffer: str = "arg_buffer.low") -> _Apply:
+            """Load the next two program bytes into a word register."""
+            return lambda builder: (
+                builder
+                # copy low byte to {buffer}
+                .apply(load_immediate(buffer))
+                # copy high byte to {to}.high
+                .apply(load_immediate(f"{to}.high"))
+                # copy low byte to {to}.low
+                .apply(transfer_byte(buffer, f"{to}.low"))
+            )
+
+        def load_absolute(to: str, buffer: str = "arg_buffer.low") -> _Apply:
+            """Load a byte from memory at the address from the next two program bytes"""
+            return lambda builder: (
+                builder
+                # Load address at pc to memory.address
+                .apply(load_word_at_pc("memory.address", buffer=buffer))
+                # Load byte at memory.address to {to}
+                .apply(transfer_byte("memory", to))
+            )
+
+        def alu_opcode(op: str) -> _Apply:
+            return lambda builder: builder.step(*cls._encode_alu_opcode_controls(op))
+
+        def a_alu_operation(op: str) -> _Apply:
+            """Run an ALU operation with the accumulator as the lhs operand.
+
+            Note that this assumes that this is either a unary operation that
+            ignores alu.rhs, or that alu.rhs is already loaded with the rhs operand.
+            """
+            return lambda builder: (
+                builder
+                # a -> alu.lhs
+                .apply(transfer_byte("a", "alu.lhs"))
+                # run alu operation
+                .apply(alu_opcode(op))
+                # alu.output -> a
+                .apply(transfer_byte("alu.output", "a"))
+            )
+
+        def a_alu_operation_immediate(op: str) -> _Apply:
+            """Run an accumulator-based ALU operation with immediate addressing.
+
+            alu.lhs comes from the accumulator.
+            alu.rhs comes from the next program byte.
+            The result is written back to the accumulator.
+            """
+            return lambda builder: (
+                builder
+                # Load next byte at pc to rhs.
+                .apply(load_immediate("alu.rhs"))
+                # Run ALU operation.
+                .apply(a_alu_operation(op))
+            )
+
+        def a_alu_operation_absolute(op: str) -> _Apply:
+            """Run an accumulator-based ALU operation with absolute addressing.
+
+            alu.lhs comes from the accumulator.
+            alu.rhs comes from the byte at the address from the next two program bytes.
+            The result is written back to the accumulator.
+            """
+            return lambda builder: (
+                builder
+                # Load byte from memory at address at pc to rhs.
+                .apply(load_absolute("alu.rhs"))
+                # Run ALU operation.
+                .apply(a_alu_operation(op))
+            )
+
         return (
-            cls._instruction_set_builder()
-            .instruction("nop", 0x00)
+            InstructionSet.Builder()
+            .instruction("nop")
+            .mode("none")
             .step()
-            .instruction("hlt", 0x01)
+            .instruction("hlt")
+            .mode("none")
             .step("halt")
-            .instruction("tax", 0x02)
-            .transfer_byte("a", "x")
-            .instruction("txa", 0x03)
-            .transfer_byte("x", "a")
-            .instruction("tay", 0x04)
-            .transfer_byte("a", "y")
-            .instruction("tya", 0x05)
-            .transfer_byte("y", "a")
+            .instruction("tax")
+            .mode("none")
+            .apply(transfer_byte("a", "x"))
+            .instruction("txa")
+            .mode("none")
+            .apply(transfer_byte("x", "a"))
+            .instruction("tay")
+            .mode("none")
+            .apply(transfer_byte("a", "y"))
+            .instruction("tya")
+            .mode("none")
+            .apply(transfer_byte("y", "a"))
             .instruction("lda")
-            .mode("immediate", 0x06)
-            .load_byte_at_pc("a")
-            .mode("absolute", 0x07)
-            .load_byte_from_pc_address("a")
-            .mode("zero_page", 0x08)
-            .load_byte_at_pc("memory.address.low")
+            .mode("immediate")
+            .apply(load_immediate("a"))
+            .mode("absolute")
+            .apply(load_absolute("a"))
+            .mode("zero_page")
+            .apply(load_immediate("memory.address.low"))
             .step("memory.address.high.reset")
-            .transfer_byte("memory", "a")
+            .apply(transfer_byte("memory", "a"))
             .instruction("jmp")
-            .mode("absolute", 0x20)
-            .load_word_at_pc("program_counter")
-            .instruction("sec", 0x40)
+            .mode("absolute")
+            .apply(load_word_at_pc("program_counter"))
+            .instruction("sec")
+            .mode("none")
             .step("alu.carry_in")
-            .instruction("clc", 0x41)
+            .instruction("clc")
+            .mode("none")
             .step("alu.carry_in.clear")
             .instruction("adc")
-            .mode("immediate", 0x42)
-            .a_alu_operation_immediate("adc")
-            .mode("absolute", 0x43)
-            .a_alu_operation_absolute("adc")
-            .header(
-                [
-                    "program_counter.low.write",
-                    "memory.address.low.read",
-                ],
-                [
-                    "program_counter.high.write",
-                    "memory.address.high.read",
-                ],
-                [
-                    "program_counter.increment",
-                    "memory.write",
-                    "controller.instruction_buffer.read",
-                ],
+            .mode("immediate")
+            .apply(a_alu_operation_immediate("adc"))
+            .mode("absolute")
+            .apply(a_alu_operation_absolute("adc"))
+            .header()
+            .step(
+                "program_counter.low.write",
+                "memory.address.low.read",
             )
-            .footer("controller.step_counter.reset")
+            .step(
+                "program_counter.high.write",
+                "memory.address.high.read",
+            )
+            .step(
+                "program_counter.increment",
+                "memory.write",
+                "controller.instruction_buffer.read",
+            )
             .build()
+            .with_last_step_controls("controller.step_counter.reset")
         )
 
     class _ProgramBuilder(ProgramBuilder):

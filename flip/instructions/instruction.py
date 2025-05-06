@@ -1,5 +1,14 @@
 from dataclasses import dataclass, field, replace
-from typing import Iterable, Iterator, Mapping, Optional, Self, Sized, override
+from typing import (
+    Callable,
+    Iterable,
+    Iterator,
+    Mapping,
+    Optional,
+    Self,
+    Sized,
+    override,
+)
 
 from flip.bytes import Byte
 from flip.instructions.addressing_mode import AddressingMode
@@ -70,6 +79,9 @@ class Instruction(Sized, Iterable["instruction_mode.InstructionMode"]):
 
         def header(self) -> "header_builder.HeaderBuilder":
             return self.end_instruction().header()
+
+        def apply(self, f: Callable[[Self], Self]) -> Self:
+            return f(self)
 
     @classmethod
     def create_simple(

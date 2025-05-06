@@ -1,5 +1,14 @@
 from dataclasses import dataclass, field, replace
-from typing import Iterable, Iterator, Mapping, Optional, Self, Sized, override
+from typing import (
+    Callable,
+    Iterable,
+    Iterator,
+    Mapping,
+    Optional,
+    Self,
+    Sized,
+    override,
+)
 
 from flip.bytes import Byte
 from flip.instructions.step import Step
@@ -44,6 +53,9 @@ class InstructionSet(Sized, Iterable["instruction.Instruction"]):
 
         def build(self) -> "InstructionSet":
             return InstructionSet.create(instructions=self._instructions)
+
+        def apply(self, f: Callable[[Self], Self]) -> Self:
+            return f(self)
 
     @override
     def __len__(self) -> int:

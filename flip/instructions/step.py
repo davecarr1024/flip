@@ -1,5 +1,15 @@
 from dataclasses import dataclass, field, replace
-from typing import Iterable, Iterator, Optional, Self, Sized, Union, overload, override
+from typing import (
+    Callable,
+    Iterable,
+    Iterator,
+    Optional,
+    Self,
+    Sized,
+    Union,
+    overload,
+    override,
+)
 
 from flip.instructions.addressing_mode import AddressingMode
 
@@ -79,6 +89,9 @@ class Step(Sized, Iterable[str]):
 
         def header(self) -> "header_builder.HeaderBuilder":
             return self.end_instruction().header()
+
+        def apply[R](self, f: Callable[[Self], R]) -> R:
+            return f(self)
 
     @classmethod
     def create(
