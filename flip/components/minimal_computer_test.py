@@ -422,3 +422,277 @@ def test_bvc_absolute_no_jump() -> None:
         .run()
     )
     assert computer.a.value == Byte(0x05)
+
+
+def test_sbc_immediate() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 5
+        .lda(0x05)
+        # set carry (no borrow)
+        .sec()
+        # a -= 2
+        .sbc(0x02)
+        # hlt
+        .hlt().run()
+    )
+    # check result
+    assert computer.a.value == Byte(0x03)
+
+
+def test_sbc_absolute() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 5
+        .lda(0x05)
+        # set carry (no borrow)
+        .sec()
+        # a -= 2
+        .sbc("label")
+        # hlt
+        .hlt()
+        # label
+        .label("label")
+        .data(Byte(0x02))
+        .run()
+    )
+    # check result
+    assert computer.a.value == Byte(0x03)
+
+
+def test_and_immediate() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0b0011
+        .lda(0b0011)
+        # a &= 0b0101
+        .and_(0b0101)
+        # hlt
+        .hlt().run()
+    )
+    # check result
+    assert computer.a.value == Byte(0x01)
+
+
+def test_and_absolute() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0b0011
+        .lda(0b0011)
+        # a &= 0b0101
+        .and_("label")
+        # hlt
+        .hlt()
+        # label
+        .label("label")
+        .data(Byte(0b0101))
+        .run()
+    )
+    # check result
+    assert computer.a.value == Byte(0x01)
+
+
+def test_ora_immediate() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0b0011
+        .lda(0b0011)
+        # a |= 0b0101
+        .ora(0b0101)
+        # hlt
+        .hlt().run()
+    )
+    # check result
+    assert computer.a.value == Byte(0b0111)
+
+
+def test_ora_absolute() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0b0011
+        .lda(0b0011)
+        # a |= 0b0101
+        .ora("label")
+        # hlt
+        .hlt()
+        # label
+        .label("label")
+        .data(Byte(0b0101))
+        .run()
+    )
+    # check result
+    assert computer.a.value == Byte(0b0111)
+
+
+def test_eor_immediate() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0b0011
+        .lda(0b0011)
+        # a ^= 0b0101
+        .eor(0b0101)
+        # hlt
+        .hlt().run()
+    )
+    # check result
+    assert computer.a.value == Byte(0b0110)
+
+
+def test_eor_absolute() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0b0011
+        .lda(0b0011)
+        # a ^= 0b0101
+        .eor("label")
+        # hlt
+        .hlt()
+        # label
+        .label("label")
+        .data(Byte(0b0101))
+        .run()
+    )
+    # check result
+    assert computer.a.value == Byte(0b0110)
+
+
+def test_asl() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0b0011
+        .lda(0b0011)
+        # a <<= 1
+        .asl()
+        # hlt
+        .hlt().run()
+    )
+    # check result
+    assert computer.a.value == Byte(0b0110)
+
+
+def test_lsr() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0b0011
+        .lda(0b0011)
+        # a >>= 1
+        .lsr()
+        # hlt
+        .hlt().run()
+    )
+    # check result
+    assert computer.a.value == Byte(0b0001)
+
+
+def test_rol() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0b0011
+        .lda(0b0011)
+        # set carry - this will be shifted in
+        .sec()
+        # a <<= 1
+        .rol()
+        # hlt
+        .hlt().run()
+    )
+    # check result
+    assert computer.a.value == Byte(0b0111)
+
+
+def test_ror() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0b0011
+        .lda(0b0011)
+        # set carry - this will be shifted in
+        .sec()
+        # a >>= 1
+        .ror()
+        # hlt
+        .hlt().run()
+    )
+    # check result
+    assert computer.a.value == Byte(0b1000_0001)
+
+
+def test_cmp_immediate_no_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 1
+        .lda(0x01)
+        # compare a with 2
+        .cmp(0x02)
+        # branch if equal - not expected to jump
+        .beq("end")
+        # a = 5
+        .lda(0x05)
+        # end
+        .label("end")
+        .hlt()
+        .run()
+    )
+    assert computer.a.value == Byte(0x05)
+
+
+def test_cmp_immediate_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 1
+        .lda(0x01)
+        # compare a with 1
+        .cmp(0x01)
+        # branch if equal - expected to jump
+        .beq("end")
+        # a = 5
+        # not expected to run
+        .lda(0x05)
+        # end
+        .label("end")
+        .hlt()
+        .run()
+    )
+    assert computer.a.value == Byte(0x01)
+
+
+def test_cmp_absolute_no_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 1
+        .lda(0x01)
+        # compare a with 2
+        .cmp("label")
+        # branch if equal - not expected to jump
+        .beq("end")
+        # a = 5
+        .lda(0x05)
+        # end
+        .label("end")
+        .hlt()
+        .label("label")
+        .data(Byte(0x02))
+        .run()
+    )
+    assert computer.a.value == Byte(0x05)
+
+
+def test_cmp_absolute_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 1
+        .lda(0x01)
+        # compare a with 1
+        .cmp("label")
+        # branch if equal - expected to jump
+        .beq("end")
+        # a = 5
+        # not expected to run
+        .lda(0x05)
+        # end
+        .label("end")
+        .hlt()
+        .label("label")
+        .data(Byte(0x01))
+        .run()
+    )
+    assert computer.a.value == Byte(0x01)

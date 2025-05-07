@@ -91,9 +91,6 @@ class MinimalComputer(Computer):
                 .apply(transfer_byte("memory", to))
             )
 
-        def alu_opcode(op: str) -> _Apply:
-            return lambda builder: builder.step(*cls._encode_alu_opcode_controls(op))
-
         def a_alu_operation(op: str) -> _Apply:
             """Run an ALU operation with the accumulator as the lhs operand.
 
@@ -102,10 +99,11 @@ class MinimalComputer(Computer):
             """
             return lambda builder: (
                 builder
-                # a -> alu.lhs
-                .apply(transfer_byte("a", "alu.lhs"))
-                # run alu operation
-                .apply(alu_opcode(op))
+                # a -> alu.lhs and run alu operation
+                # Doing these on the same step is ok because the ALU will
+                # load the lhs during tick_write/read, and then run the operation
+                # during tick_process.
+                .step(*cls._encode_alu_opcode_controls(op), "a.write", "alu.lhs.read")
                 # alu.output -> a
                 .apply(transfer_byte("alu.output", "a"))
             )
@@ -208,10 +206,77 @@ class MinimalComputer(Computer):
             .apply(a_alu_operation_immediate("adc"))
             .mode("absolute")
             .apply(a_alu_operation_absolute("adc"))
+            # sbc - subtract with carry
+            .instruction("sbc")
+            .mode("immediate")
+            .apply(a_alu_operation_immediate("sbc"))
+            .mode("absolute")
+            .apply(a_alu_operation_absolute("sbc"))
+            # and - and
+            .instruction("and")
+            .mode("immediate")
+            .apply(a_alu_operation_immediate("and"))
+            .mode("absolute")
+            .apply(a_alu_operation_absolute("and"))
+            # ora - or
+            .instruction("ora")
+            .mode("immediate")
+            .apply(a_alu_operation_immediate("or"))
+            .mode("absolute")
+            .apply(a_alu_operation_absolute("or"))
+            # eor - exclusive or
+            .instruction("eor")
+            .mode("immediate")
+            .apply(a_alu_operation_immediate("xor"))
+            .mode("absolute")
+            .apply(a_alu_operation_absolute("xor"))
+            # asl - arithmetic shift left
+            .instruction("asl")
+            .mode("none")
+            .apply(a_alu_operation("shl"))
+            # lsr - logical shift right
+            .instruction("lsr")
+            .mode("none")
+            .apply(a_alu_operation("shr"))
+            # rol - rotate left
+            .instruction("rol")
+            .mode("none")
+            .apply(a_alu_operation("rol"))
+            # ror - rotate right
+            .instruction("ror")
+            .mode("none")
+            .apply(a_alu_operation("ror"))
             # beq - branch if equal / zero flag is set
             .instruction("beq")
             .mode("absolute")
             .apply(conditional_jump("alu.zero"))
+            # cmp - compare
+            .instruction("cmp")
+            .mode("immediate")
+            # Load next byte at pc to rhs.
+            .apply(load_immediate("alu.rhs"))
+            # a -> alu.lhs and run alu operation
+            # always set carry to ensure we don't borrow
+            # discard sbc result
+            .step(
+                *cls._encode_alu_opcode_controls("sbc"),
+                "a.write",
+                "alu.lhs.read",
+                # always set carry to ensure we don't borrow
+                "alu.carry_in",
+            )
+            .mode("absolute")
+            # Load byte from memory at address at pc to rhs.
+            .apply(load_absolute("alu.rhs"))
+            # a -> alu.lhs and run alu operation
+            # always set carry to ensure we don't borrow
+            # discard sbc result
+            .step(
+                *cls._encode_alu_opcode_controls("sbc"),
+                "a.write",
+                "alu.lhs.read",
+                "alu.carry_in",
+            )
             # bne - branch if not equal / zero flag is not set
             .instruction("bne")
             .mode("absolute")
@@ -304,6 +369,33 @@ class MinimalComputer(Computer):
 
         def adc(self, arg: int | Byte | str) -> Self:
             return self.instruction("adc", arg)
+
+        def sbc(self, arg: int | Byte | str) -> Self:
+            return self.instruction("sbc", arg)
+
+        def and_(self, arg: int | Byte | str) -> Self:
+            return self.instruction("and", arg)
+
+        def ora(self, arg: int | Byte | str) -> Self:
+            return self.instruction("ora", arg)
+
+        def eor(self, arg: int | Byte | str) -> Self:
+            return self.instruction("eor", arg)
+
+        def asl(self) -> Self:
+            return self.instruction("asl")
+
+        def lsr(self) -> Self:
+            return self.instruction("lsr")
+
+        def rol(self) -> Self:
+            return self.instruction("rol")
+
+        def ror(self) -> Self:
+            return self.instruction("ror")
+
+        def cmp(self, arg: int | Byte | str) -> Self:
+            return self.instruction("cmp", arg)
 
         def beq(self, arg: int | Word | str) -> Self:
             return self.instruction("beq").absolute(arg)
