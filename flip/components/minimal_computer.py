@@ -140,26 +140,47 @@ class MinimalComputer(Computer):
                 .apply(a_alu_operation(op))
             )
 
+        def conditional_jump(status: str, invert: bool = False) -> _Apply:
+            """Conditionally jump to the address from the next two program bytes."""
+
+            return lambda builder: (
+                builder
+                # If status is set, jump to address at pc.
+                .impl(**{status: not invert})
+                .apply(load_word_at_pc("program_counter"))
+                # If status is not set, increment pc by 2.
+                .impl(**{status: invert})
+                .step("program_counter.increment")
+                .step("program_counter.increment")
+            )
+
         return (
             InstructionSet.Builder()
+            # nop - no operation
             .instruction("nop")
             .mode("none")
             .step()
+            # hlt - halt and catch fire
             .instruction("hlt")
             .mode("none")
             .step("halt")
+            # tax - transfer accumulator to x
             .instruction("tax")
             .mode("none")
             .apply(transfer_byte("a", "x"))
+            # txa - transfer x to accumulator
             .instruction("txa")
             .mode("none")
             .apply(transfer_byte("x", "a"))
+            # tay - transfer accumulator to y
             .instruction("tay")
             .mode("none")
             .apply(transfer_byte("a", "y"))
+            # tya - transfer y to accumulator
             .instruction("tya")
             .mode("none")
             .apply(transfer_byte("y", "a"))
+            # lda - load accumulator
             .instruction("lda")
             .mode("immediate")
             .apply(load_immediate("a"))
@@ -169,20 +190,57 @@ class MinimalComputer(Computer):
             .apply(load_immediate("memory.address.low"))
             .step("memory.address.high.reset")
             .apply(transfer_byte("memory", "a"))
+            # jmp - jump to address
             .instruction("jmp")
             .mode("absolute")
             .apply(load_word_at_pc("program_counter"))
+            # sec - set carry
             .instruction("sec")
             .mode("none")
             .step("alu.carry_in")
+            # clc - clear carry
             .instruction("clc")
             .mode("none")
             .step("alu.carry_in.clear")
+            # adc - add with carry
             .instruction("adc")
             .mode("immediate")
             .apply(a_alu_operation_immediate("adc"))
             .mode("absolute")
             .apply(a_alu_operation_absolute("adc"))
+            # beq - branch if equal / zero flag is set
+            .instruction("beq")
+            .mode("absolute")
+            .apply(conditional_jump("alu.zero"))
+            # bne - branch if not equal / zero flag is not set
+            .instruction("bne")
+            .mode("absolute")
+            .apply(conditional_jump("alu.zero", invert=True))
+            # bmi - branch if minus / negative flag is set
+            .instruction("bmi")
+            .mode("absolute")
+            .apply(conditional_jump("alu.negative"))
+            # bpl - branch if plus / negative flag is not set
+            .instruction("bpl")
+            .mode("absolute")
+            .apply(conditional_jump("alu.negative", invert=True))
+            # bcs - branch if carry set
+            .instruction("bcs")
+            .mode("absolute")
+            .apply(conditional_jump("alu.carry_out"))
+            # bcc - branch if carry clear
+            .instruction("bcc")
+            .mode("absolute")
+            .apply(conditional_jump("alu.carry_out", invert=True))
+            # bvs - branch if overflow set
+            .instruction("bvs")
+            .mode("absolute")
+            .apply(conditional_jump("alu.overflow"))
+            # bvc - branch if overflow clear
+            .instruction("bvc")
+            .mode("absolute")
+            .apply(conditional_jump("alu.overflow", invert=True))
+            # header - steps to run before every instruction
             .header()
             .step(
                 "program_counter.low.write",
@@ -198,7 +256,16 @@ class MinimalComputer(Computer):
                 "controller.instruction_buffer.read",
             )
             .build()
-            .with_last_step_controls("controller.step_counter.reset")
+            # footer - control to set during last step of every instruction
+            .with_last_step_controls(
+                # reset the controller's step counter
+                "controller.step_counter.reset",
+                # latch the status register - this must be the last step
+                # of every instruction because it gathers all the statuses
+                # from the root component and latches them into the status
+                # register, ready for the next instruction.
+                "controller.status.latch",
+            )
         )
 
     class _ProgramBuilder(ProgramBuilder):
@@ -237,6 +304,30 @@ class MinimalComputer(Computer):
 
         def adc(self, arg: int | Byte | str) -> Self:
             return self.instruction("adc", arg)
+
+        def beq(self, arg: int | Word | str) -> Self:
+            return self.instruction("beq").absolute(arg)
+
+        def bne(self, arg: int | Word | str) -> Self:
+            return self.instruction("bne").absolute(arg)
+
+        def bmi(self, arg: int | Word | str) -> Self:
+            return self.instruction("bmi").absolute(arg)
+
+        def bpl(self, arg: int | Word | str) -> Self:
+            return self.instruction("bpl").absolute(arg)
+
+        def bcs(self, arg: int | Word | str) -> Self:
+            return self.instruction("bcs").absolute(arg)
+
+        def bcc(self, arg: int | Word | str) -> Self:
+            return self.instruction("bcc").absolute(arg)
+
+        def bvs(self, arg: int | Word | str) -> Self:
+            return self.instruction("bvs").absolute(arg)
+
+        def bvc(self, arg: int | Word | str) -> Self:
+            return self.instruction("bvc").absolute(arg)
 
         def load(self) -> "MinimalComputer":
             return MinimalComputer(data=self.build())

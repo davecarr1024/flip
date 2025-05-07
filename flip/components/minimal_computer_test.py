@@ -142,3 +142,283 @@ def test_clc() -> None:
     assert computer.alu.carry_in
     computer.run(MinimalComputer.program_builder().clc().hlt())
     assert not computer.alu.carry_in
+
+
+def test_beq_absolute_no_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0
+        .lda(0x00)
+        # a += 1
+        .adc(0x01)
+        # if a == 0, jump to end
+        # not expected to jump
+        .beq("end")
+        # a = 5
+        .lda(0x05)
+        # hlt
+        .label("end")
+        .hlt()
+        .run()
+    )
+    # assert that we did not jump
+    assert computer.a.value == Byte(0x05)
+
+
+def test_beq_absolute_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0
+        .lda(0x00)
+        # a += 0
+        .adc(0x00)
+        # if a == 0, jump to end
+        # expected to jump
+        .beq("end")
+        # a = 5
+        .lda(0x05)
+        # hlt
+        .label("end")
+        .hlt()
+        .run()
+    )
+    # assert that we did jump
+    assert computer.a.value == Byte(0x00)
+
+
+def test_bmi_absolute_no_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0
+        .lda(0x00)
+        # a += 1
+        .adc(0x01)
+        # if a < 0, jump to end
+        # not expected to jump
+        .bmi("end")
+        # a = 5
+        .lda(0x05)
+        # hlt
+        .label("end")
+        .hlt()
+        .run()
+    )
+    # assert that we did not jump
+    assert computer.a.value == Byte(0x05)
+
+
+def test_bmi_absolute_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0
+        .lda(0x00)
+        # a -= 1
+        .adc(0xFF)
+        # if a < 0, jump to end
+        # expected to jump
+        .bmi("end")
+        # a = 5
+        .lda(0x05)
+        # hlt
+        .label("end")
+        .hlt()
+        .run()
+    )
+    # assert that we did jump
+    assert computer.a.value == Byte(0xFF)
+
+
+def test_bcs_absolute_no_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0
+        .lda(0x00)
+        # a += 1
+        .adc(0x01)
+        # if carry, jump to end
+        # not expected to jump
+        .bcs("end")
+        # a = 5
+        .lda(0x05)
+        # hlt
+        .label("end")
+        .hlt()
+        .run()
+    )
+    # assert that we did not jump
+    assert computer.a.value == Byte(0x05)
+
+
+def test_bcs_absolute_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0
+        .lda(0xFF)
+        # a += 1
+        .adc(0x01)
+        # if carry, jump to end
+        # expected to jump
+        .bcs("end")
+        # a = 5
+        .lda(0x05)
+        # hlt
+        .label("end")
+        .hlt()
+        .run()
+    )
+    # assert that we did jump
+    assert computer.a.value == Byte(0x00)
+
+
+def test_bvs_absolute_no_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0
+        .lda(0x00)
+        # a += 1
+        .adc(0x01)
+        # if overflow, jump to end
+        # not expected to jump
+        .bvs("end")
+        # a = 5
+        .lda(0x05)
+        # hlt
+        .label("end")
+        .hlt()
+        .run()
+    )
+    # assert that we did not jump
+    assert computer.a.value == Byte(0x05)
+
+
+def test_bvs_absolute_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0x7F
+        .lda(0x7F)
+        # a += 1
+        .adc(0x01)
+        # if overflow, jump to end
+        # expected to jump
+        .bvs("end")
+        # a = 5
+        .lda(0x05)
+        # hlt
+        .label("end")
+        .hlt()
+        .run()
+    )
+    # assert that we did jump
+    assert computer.a.value == Byte(0x80)
+
+
+def test_bne_absolute_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .lda(0x00)
+        .adc(0x01)  # a = 1 → zero flag not set
+        .bne("end")  # should jump
+        .lda(0x05)
+        .label("end")
+        .hlt()
+        .run()
+    )
+    assert computer.a.value == Byte(0x01)
+
+
+def test_bne_absolute_no_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .lda(0x00)
+        .adc(0x00)  # a = 0 → zero flag set
+        .bne("end")  # should not jump
+        .lda(0x05)
+        .label("end")
+        .hlt()
+        .run()
+    )
+    assert computer.a.value == Byte(0x05)
+
+
+def test_bpl_absolute_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .lda(0x00)
+        .adc(0x01)  # a = 1 → negative flag not set
+        .bpl("end")  # should jump
+        .lda(0x05)
+        .label("end")
+        .hlt()
+        .run()
+    )
+    assert computer.a.value == Byte(0x01)
+
+
+def test_bpl_absolute_no_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .lda(0x00)
+        .adc(0xFF)  # a = -1 → negative flag set
+        .bpl("end")  # should not jump
+        .lda(0x05)
+        .label("end")
+        .hlt()
+        .run()
+    )
+    assert computer.a.value == Byte(0x05)
+
+
+def test_bcc_absolute_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .lda(0x00)
+        .adc(0x01)  # no carry
+        .bcc("end")  # should jump
+        .lda(0x05)
+        .label("end")
+        .hlt()
+        .run()
+    )
+    assert computer.a.value == Byte(0x01)
+
+
+def test_bcc_absolute_no_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .lda(0xFF)
+        .adc(0x01)  # causes carry
+        .bcc("end")  # should not jump
+        .lda(0x05)
+        .label("end")
+        .hlt()
+        .run()
+    )
+    assert computer.a.value == Byte(0x05)
+
+
+def test_bvc_absolute_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .lda(0x00)
+        .adc(0x01)  # no overflow
+        .bvc("end")  # should jump
+        .lda(0x05)
+        .label("end")
+        .hlt()
+        .run()
+    )
+    assert computer.a.value == Byte(0x01)
+
+
+def test_bvc_absolute_no_jump() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .lda(0x7F)
+        .adc(0x01)  # overflow
+        .bvc("end")  # should not jump
+        .lda(0x05)
+        .label("end")
+        .hlt()
+        .run()
+    )
+    assert computer.a.value == Byte(0x05)
