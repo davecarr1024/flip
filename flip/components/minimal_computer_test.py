@@ -161,6 +161,36 @@ def test_sta_zero_page() -> None:
     assert computer.memory[Word(0x0012)] == Byte(0xAB)
 
 
+def test_sta_index_x() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .ldx(0x02)
+        .lda(0xAB)
+        .sta_index_x("data")
+        .hlt()
+        .at(0x100)
+        .label("data")
+        .data(0x10, 0x20, 0x30)
+        .run()
+    )
+    assert computer.memory[Word(0x102)] == Byte(0xAB)
+
+
+def test_sta_index_y() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .ldy(0x02)
+        .lda(0xAB)
+        .sta_index_y("data")
+        .hlt()
+        .at(0x100)
+        .label("data")
+        .data(0x10, 0x20, 0x30)
+        .run()
+    )
+    assert computer.memory[Word(0x102)] == Byte(0xAB)
+
+
 def test_ldx_immediate() -> None:
     computer = MinimalComputer.program_builder().ldx(0x03).hlt().run()
     assert computer.x.value == Byte(0x03)
