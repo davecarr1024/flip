@@ -129,11 +129,13 @@ class Computer(Component, ABC):
         self._log(f"loading data {data}")
         match data:
             case Program():
-                self.memory.load(data.assemble().memory)
+                data_ = data.assemble().memory
             case ProgramBuilder():
-                self.memory.load(data.build().assemble().memory)
+                data_ = data.build().assemble().memory
             case _:
-                self.memory.load(data)
+                data_ = data
+        self._log(f"loading memory {data_}")
+        self.memory.load(data_)
 
     def run(self, program: Program | ProgramBuilder) -> None:
         self.load(program)

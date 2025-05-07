@@ -91,6 +91,40 @@ class MinimalComputer(Computer):
                 .apply(transfer_byte("memory", to))
             )
 
+        def load_zero_page(to: str) -> _Apply:
+            """Load a byte at the next address, in the zero page."""
+            return lambda builder: (
+                builder
+                # Load address at pc to memory.address.low
+                .apply(load_immediate("memory.address.low"))
+                # Reset memory.address.high
+                .step("memory.address.high.reset")
+                # Load byte at memory.address to {to}
+                .apply(transfer_byte("memory", to))
+            )
+
+        def store_absolute(from_: str, buffer: str = "arg_buffer.low") -> _Apply:
+            """Store a byte to memory at the address from the next two program bytes"""
+            return lambda builder: (
+                builder
+                # Load address at pc to memory.address
+                .apply(load_word_at_pc("memory.address", buffer=buffer))
+                # Store byte at memory.address from {from_}
+                .apply(transfer_byte(from_, "memory"))
+            )
+
+        def store_zero_page(from_: str) -> _Apply:
+            """Store a byte to memory at the next address, in the zero page."""
+            return lambda builder: (
+                builder
+                # Load address at pc to memory.address.low
+                .apply(load_immediate("memory.address.low"))
+                # Reset memory.address.high
+                .step("memory.address.high.reset")
+                # Store byte at memory.address from {from_}
+                .apply(transfer_byte(from_, "memory"))
+            )
+
         def a_alu_operation(op: str) -> _Apply:
             """Run an ALU operation with the accumulator as the lhs operand.
 
@@ -152,115 +186,168 @@ class MinimalComputer(Computer):
                 .step("program_counter.increment")
             )
 
-        return (
-            InstructionSet.Builder()
-            # nop - no operation
-            .instruction("nop")
-            .mode("none")
-            .step()
-            # hlt - halt and catch fire
-            .instruction("hlt")
-            .mode("none")
-            .step("halt")
-            # tax - transfer accumulator to x
-            .instruction("tax")
-            .mode("none")
-            .apply(transfer_byte("a", "x"))
-            # txa - transfer x to accumulator
-            .instruction("txa")
-            .mode("none")
-            .apply(transfer_byte("x", "a"))
-            # tay - transfer accumulator to y
-            .instruction("tay")
-            .mode("none")
-            .apply(transfer_byte("a", "y"))
-            # tya - transfer y to accumulator
-            .instruction("tya")
-            .mode("none")
-            .apply(transfer_byte("y", "a"))
-            # lda - load accumulator
-            .instruction("lda")
-            .mode("immediate")
-            .apply(load_immediate("a"))
-            .mode("absolute")
-            .apply(load_absolute("a"))
-            .mode("zero_page")
-            .apply(load_immediate("memory.address.low"))
-            .step("memory.address.high.reset")
-            .apply(transfer_byte("memory", "a"))
-            # sta - store accumulator
-            .instruction("sta")
-            .mode("absolute")
-            .apply(load_word_at_pc("memory.address"))
-            .apply(transfer_byte("a", "memory"))
-            .mode("zero_page")
-            .apply(load_immediate("memory.address.low"))
-            .step("memory.address.high.reset")
-            .apply(transfer_byte("a", "memory"))
-            # jmp - jump to address
-            .instruction("jmp")
+        def transfer_instruction(
+            builder: InstructionSet.Builder,
+            name: str,
+            from_: str,
+            to_: str,
+        ) -> InstructionSet.Builder:
+            return (
+                builder.instruction(name)
+                .mode("none")
+                .apply(transfer_byte(from_, to_))
+                .end_instruction()
+            )
+
+        def load_instruction(
+            builder: InstructionSet.Builder, name: str, to_: str
+        ) -> InstructionSet.Builder:
+            return (
+                builder.instruction(name)
+                .mode("immediate")
+                .apply(load_immediate(to_))
+                .mode("absolute")
+                .apply(load_absolute(to_))
+                .mode("zero_page")
+                .apply(load_zero_page(to_))
+                .end_instruction()
+            )
+
+        def store_instruction(
+            builder: InstructionSet.Builder, name: str, from_: str
+        ) -> InstructionSet.Builder:
+            return (
+                builder.instruction(name)
+                .mode("absolute")
+                .apply(store_absolute(from_))
+                .mode("zero_page")
+                .apply(store_zero_page(from_))
+                .end_instruction()
+            )
+
+        def load_and_store_instructions(
+            builder: InstructionSet.Builder, reg: str
+        ) -> InstructionSet.Builder:
+            assert len(reg) == 1
+            builder = load_instruction(builder, f"ld{reg}", reg)
+            builder = store_instruction(builder, f"st{reg}", reg)
+            return builder
+
+        def alu_binary_instruction(
+            builder: InstructionSet.Builder,
+            name: str,
+            op: Optional[str] = None,
+        ) -> InstructionSet.Builder:
+            op_ = op if op is not None else name
+            return (
+                builder.instruction(name)
+                .mode("immediate")
+                .apply(a_alu_operation_immediate(op_))
+                .mode("absolute")
+                .apply(a_alu_operation_absolute(op_))
+                .end_instruction()
+            )
+
+        def alu_unary_instruction(
+            builder: InstructionSet.Builder,
+            name: str,
+            op: Optional[str] = None,
+        ) -> InstructionSet.Builder:
+            op_ = op if op is not None else name
+            return (
+                builder.instruction(name)
+                .mode("none")
+                .apply(a_alu_operation(op_))
+                .end_instruction()
+            )
+
+        def conditional_jump_instruction(
+            builder: InstructionSet.Builder,
+            name: str,
+            invert_name: str,
+            status: str,
+        ) -> InstructionSet.Builder:
+            return (
+                builder.instruction(name)
+                .mode("absolute")
+                .apply(conditional_jump(status))
+                .instruction(invert_name)
+                .mode("absolute")
+                .apply(conditional_jump(status, invert=True))
+                .end_instruction()
+            )
+
+        builder: InstructionSet.Builder = InstructionSet.Builder()
+        # nop - no operation
+        builder = builder.instruction("nop").mode("none").step().end_instruction()
+        # hlt - halt and catch fire
+        builder = builder.instruction("hlt").mode("none").step("halt").end_instruction()
+
+        # A X Y transfer instructions
+
+        # tax - transfer accumulator to x
+        builder = transfer_instruction(builder, "tax", "a", "x")
+        # txa - transfer x to accumulator
+        builder = transfer_instruction(builder, "txa", "x", "a")
+        # tay - transfer accumulator to y
+        builder = transfer_instruction(builder, "tay", "a", "y")
+        # tya - transfer y to accumulator
+        builder = transfer_instruction(builder, "tya", "y", "a")
+
+        # A X Y load and store instructions
+
+        # lda and sta - load and store accumulator
+        builder = load_and_store_instructions(builder, "a")
+        # ldx and stx - load and store x
+        builder = load_and_store_instructions(builder, "x")
+        # ldy and sty - load and store y
+        builder = load_and_store_instructions(builder, "y")
+
+        # jmp - jump to address
+        builder = (
+            builder.instruction("jmp")
             .mode("absolute")
             .apply(load_word_at_pc("program_counter"))
-            # sec - set carry
-            .instruction("sec")
+            .end_instruction()
+        )
+
+        # ALU instructions
+
+        # sec - set carry
+        builder = (
+            builder.instruction("sec")
             .mode("none")
             .step("alu.carry_in")
-            # clc - clear carry
-            .instruction("clc")
+            .end_instruction()
+        )
+        # clc - clear carry
+        builder = (
+            builder.instruction("clc")
             .mode("none")
             .step("alu.carry_in.clear")
-            # adc - add with carry
-            .instruction("adc")
-            .mode("immediate")
-            .apply(a_alu_operation_immediate("adc"))
-            .mode("absolute")
-            .apply(a_alu_operation_absolute("adc"))
-            # sbc - subtract with carry
-            .instruction("sbc")
-            .mode("immediate")
-            .apply(a_alu_operation_immediate("sbc"))
-            .mode("absolute")
-            .apply(a_alu_operation_absolute("sbc"))
-            # and - and
-            .instruction("and")
-            .mode("immediate")
-            .apply(a_alu_operation_immediate("and"))
-            .mode("absolute")
-            .apply(a_alu_operation_absolute("and"))
-            # ora - or
-            .instruction("ora")
-            .mode("immediate")
-            .apply(a_alu_operation_immediate("or"))
-            .mode("absolute")
-            .apply(a_alu_operation_absolute("or"))
-            # eor - exclusive or
-            .instruction("eor")
-            .mode("immediate")
-            .apply(a_alu_operation_immediate("xor"))
-            .mode("absolute")
-            .apply(a_alu_operation_absolute("xor"))
-            # asl - arithmetic shift left
-            .instruction("asl")
-            .mode("none")
-            .apply(a_alu_operation("shl"))
-            # lsr - logical shift right
-            .instruction("lsr")
-            .mode("none")
-            .apply(a_alu_operation("shr"))
-            # rol - rotate left
-            .instruction("rol")
-            .mode("none")
-            .apply(a_alu_operation("rol"))
-            # ror - rotate right
-            .instruction("ror")
-            .mode("none")
-            .apply(a_alu_operation("ror"))
-            # beq - branch if equal / zero flag is set
-            .instruction("beq")
-            .mode("absolute")
-            .apply(conditional_jump("alu.zero"))
-            # cmp - compare
-            .instruction("cmp")
+            .end_instruction()
+        )
+        # adc - add with carry
+        builder = alu_binary_instruction(builder, "adc")
+        # sbc - subtract with carry
+        builder = alu_binary_instruction(builder, "sbc")
+        # and - and
+        builder = alu_binary_instruction(builder, "and")
+        # ora - or
+        builder = alu_binary_instruction(builder, "ora", "or")
+        # eor - exclusive or
+        builder = alu_binary_instruction(builder, "eor", "xor")
+        # asl - arithmetic shift left
+        builder = alu_unary_instruction(builder, "asl", "shl")
+        # lsr - logical shift right
+        builder = alu_unary_instruction(builder, "lsr", "shr")
+        # rol - rotate left
+        builder = alu_unary_instruction(builder, "rol")
+        # ror - rotate right
+        builder = alu_unary_instruction(builder, "ror")
+        # cmp - compare
+        builder = (
+            builder.instruction("cmp")
             .mode("immediate")
             # Load next byte at pc to rhs.
             .apply(load_immediate("alu.rhs"))
@@ -271,7 +358,6 @@ class MinimalComputer(Computer):
                 *cls._encode_alu_opcode_controls("sbc"),
                 "a.write",
                 "alu.lhs.read",
-                # always set carry to ensure we don't borrow
                 "alu.carry_in",
             )
             .mode("absolute")
@@ -286,36 +372,21 @@ class MinimalComputer(Computer):
                 "alu.lhs.read",
                 "alu.carry_in",
             )
-            # bne - branch if not equal / zero flag is not set
-            .instruction("bne")
-            .mode("absolute")
-            .apply(conditional_jump("alu.zero", invert=True))
-            # bmi - branch if minus / negative flag is set
-            .instruction("bmi")
-            .mode("absolute")
-            .apply(conditional_jump("alu.negative"))
-            # bpl - branch if plus / negative flag is not set
-            .instruction("bpl")
-            .mode("absolute")
-            .apply(conditional_jump("alu.negative", invert=True))
-            # bcs - branch if carry set
-            .instruction("bcs")
-            .mode("absolute")
-            .apply(conditional_jump("alu.carry_out"))
-            # bcc - branch if carry clear
-            .instruction("bcc")
-            .mode("absolute")
-            .apply(conditional_jump("alu.carry_out", invert=True))
-            # bvs - branch if overflow set
-            .instruction("bvs")
-            .mode("absolute")
-            .apply(conditional_jump("alu.overflow"))
-            # bvc - branch if overflow clear
-            .instruction("bvc")
-            .mode("absolute")
-            .apply(conditional_jump("alu.overflow", invert=True))
-            # header - steps to run before every instruction
-            .header()
+            .end_instruction()
+        )
+
+        # beq/bne - branch on zero flag
+        builder = conditional_jump_instruction(builder, "beq", "bne", "alu.zero")
+        # bmi/bpl - branch on negative flag
+        builder = conditional_jump_instruction(builder, "bmi", "bpl", "alu.negative")
+        # bcs/bcc - branch on carry flag
+        builder = conditional_jump_instruction(builder, "bcs", "bcc", "alu.carry_out")
+        # bvs/bvc - branch on overflow flag
+        builder = conditional_jump_instruction(builder, "bvs", "bvc", "alu.overflow")
+
+        # header - steps to run before every instruction
+        instruction_set = (
+            builder.header()
             .step(
                 "program_counter.low.write",
                 "memory.address.low.read",
@@ -330,17 +401,19 @@ class MinimalComputer(Computer):
                 "controller.instruction_buffer.read",
             )
             .build()
-            # footer - control to set during last step of every instruction
-            .with_last_step_controls(
-                # reset the controller's step counter
-                "controller.step_counter.reset",
-                # latch the status register - this must be the last step
-                # of every instruction because it gathers all the statuses
-                # from the root component and latches them into the status
-                # register, ready for the next instruction.
-                "controller.status.latch",
-            )
         )
+
+        # footer - control to set during last step of every instruction
+        instruction_set = instruction_set.with_last_step_controls(
+            # reset the controller's step counter
+            "controller.step_counter.reset",
+            # latch the status register - this must be the last step
+            # of every instruction because it gathers all the statuses
+            # from the root component and latches them into the status
+            # register, ready for the next instruction.
+            "controller.status.latch",
+        )
+        return instruction_set
 
     class _ProgramBuilder(ProgramBuilder):
         def nop(self) -> Self:
@@ -372,6 +445,30 @@ class MinimalComputer(Computer):
 
         def sta_zero_page(self, arg: int | Byte) -> Self:
             return self.instruction("sta").zero_page(arg)
+
+        def ldx(self, arg: int | Byte | str) -> Self:
+            return self.instruction("ldx", arg)
+
+        def ldx_zero_page(self, arg: int | Byte) -> Self:
+            return self.instruction("ldx").zero_page(arg)
+
+        def stx(self, arg: int | Word | str) -> Self:
+            return self.instruction("stx").absolute(arg)
+
+        def stx_zero_page(self, arg: int | Byte) -> Self:
+            return self.instruction("stx").zero_page(arg)
+
+        def ldy(self, arg: int | Byte | str) -> Self:
+            return self.instruction("ldy", arg)
+
+        def ldy_zero_page(self, arg: int | Byte) -> Self:
+            return self.instruction("ldy").zero_page(arg)
+
+        def sty(self, arg: int | Word | str) -> Self:
+            return self.instruction("sty").absolute(arg)
+
+        def sty_zero_page(self, arg: int | Byte) -> Self:
+            return self.instruction("sty").zero_page(arg)
 
         def jmp(self, arg: int | Word | str) -> Self:
             return self.instruction("jmp").absolute(arg)

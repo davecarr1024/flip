@@ -133,6 +133,126 @@ def test_sta_zero_page() -> None:
     assert computer.memory[Word(0x0012)] == Byte(0xAB)
 
 
+def test_ldx_immediate() -> None:
+    computer = MinimalComputer.program_builder().ldx(0x03).hlt().run()
+    assert computer.x.value == Byte(0x03)
+
+
+def test_ldx_absolute() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .ldx("label")
+        .hlt()
+        .label("label")
+        .data(Byte(0xAB))
+        .run()
+    )
+    assert computer.x.value == Byte(0xAB)
+
+
+def test_ldx_zero_page() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .at(0x12)
+        .data(0xAB)
+        .at(0x100)
+        .ldx_zero_page(0x12)
+        .hlt()
+        .load()
+    )
+    computer.program_counter.value = Word(0x100)
+    computer.tick_until_halt()
+    assert computer.x.value == Byte(0xAB)
+
+
+def test_stx_absolute() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .ldx(0xAB)
+        .stx("label")
+        .hlt()
+        .at(0xBEEF)
+        .label("label")
+        .data(Byte(0x00))
+        .run()
+    )
+    assert computer.memory[Word(0xBEEF)] == Byte(0xAB)
+
+
+def test_stx_zero_page() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .at(0xBEEF)
+        .ldx(0xAB)
+        .stx_zero_page(0x12)
+        .hlt()
+        .load()
+    )
+    computer.program_counter.value = Word(0xBEEF)
+    computer.tick_until_halt()
+    assert computer.memory[Word(0x0012)] == Byte(0xAB)
+
+
+def test_ldy_immediate() -> None:
+    computer = MinimalComputer.program_builder().ldy(0x03).hlt().run()
+    assert computer.y.value == Byte(0x03)
+
+
+def test_ldy_absolute() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .ldy("label")
+        .hlt()
+        .label("label")
+        .data(Byte(0xAB))
+        .run()
+    )
+    assert computer.y.value == Byte(0xAB)
+
+
+def test_ldy_zero_page() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .at(0x12)
+        .data(0xAB)
+        .at(0x100)
+        .ldy_zero_page(0x12)
+        .hlt()
+        .load()
+    )
+    computer.program_counter.value = Word(0x100)
+    computer.tick_until_halt()
+    assert computer.y.value == Byte(0xAB)
+
+
+def test_sty_absolute() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .ldy(0xAB)
+        .sty("label")
+        .hlt()
+        .at(0xBEEF)
+        .label("label")
+        .data(Byte(0x00))
+        .run()
+    )
+    assert computer.memory[Word(0xBEEF)] == Byte(0xAB)
+
+
+def test_sty_zero_page() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .at(0xBEEF)
+        .ldy(0xAB)
+        .sty_zero_page(0x12)
+        .hlt()
+        .load()
+    )
+    computer.program_counter.value = Word(0xBEEF)
+    computer.tick_until_halt()
+    assert computer.memory[Word(0x0012)] == Byte(0xAB)
+
+
 def test_jmp_absolute() -> None:
     computer = MinimalComputer.program_builder().jmp(0xBEEF).at(0xBEEF).hlt().run()
     assert computer.program_counter.value == Word(0xBEF0)

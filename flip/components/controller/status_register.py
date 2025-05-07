@@ -137,7 +137,6 @@ class StatusRegister(Register):
         """
         super()._tick_clear()
         if self.latch:
-            self._log(f"Latching status values: {self.root.statuses_by_path}")
             for status in self.__format:
                 if status not in self.root.statuses_by_path:
                     raise self._error(
