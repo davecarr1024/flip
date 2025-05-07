@@ -83,6 +83,20 @@ class ProgramBuilder(Errorable):
             case Byte():
                 return self._with_arg(Program.Instruction.ZeroPage(arg))
 
+    def index_x(self, arg: int | Word | str) -> Self:
+        match arg:
+            case int():
+                return self._with_arg(Program.Instruction.IndexX(Word(arg)))
+            case Word() | str():
+                return self._with_arg(Program.Instruction.IndexX(arg))
+
+    def index_y(self, arg: int | Word | str) -> Self:
+        match arg:
+            case int():
+                return self._with_arg(Program.Instruction.IndexY(Word(arg)))
+            case Word() | str():
+                return self._with_arg(Program.Instruction.IndexY(arg))
+
     def label(self, name: str) -> Self:
         self = self._collapse_pending_instruction()
         return self._with_program(self.program.with_label(name))

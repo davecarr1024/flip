@@ -91,6 +91,52 @@ class MinimalComputer(Computer):
                 .apply(transfer_byte("memory", to))
             )
 
+        def load_indexed(
+            to: str,
+            index: str,
+            buffer: str = "arg_buffer.low",
+        ) -> _Apply:
+            """Load a byte byte from an indexed location in memory.
+
+            The next two program bytes are used as the base address.
+            The index register is added to the low byte of the address, with
+            a carry into the high byte.
+            The result is loaded into {to}.
+            """
+            return lambda builder: (
+                builder
+                # Load low address-in byte to alu.lhs.
+                .apply(load_immediate("alu.lhs"))
+                # Load high address-in byte to buffer.
+                .apply(load_immediate(buffer))
+                # Clear carry in for the first add.
+                .step("alu.carry_in.clear")
+                # Add index to low address-in byte.
+                .step(
+                    f"{index}.write",
+                    "alu.rhs.read",
+                    *cls._encode_alu_opcode_controls("adc"),
+                )
+                # Copy result to memory.address.low.
+                .apply(transfer_byte("alu.output", "memory.address.low"))
+                # Prepare for rhs carry add.
+                .step(
+                    # Copy high address in byte to lhs.
+                    f"{buffer}.write",
+                    "alu.lhs.read",
+                    # Latch carry state from the first add.
+                    "controller.status.latch",
+                    # Zero alu.rhs for the second add - just adding the carry.
+                    "alu.rhs.reset",
+                )
+                # Add carry to high address-in byte.
+                .step(*cls._encode_alu_opcode_controls("adc"))
+                # Copy result to memory.address.high.
+                .apply(transfer_byte("alu.output", "memory.address.high"))
+                # Load byte at memory.address to {to}.
+                .apply(transfer_byte("memory", to))
+            )
+
         def load_zero_page(to: str) -> _Apply:
             """Load a byte at the next address, in the zero page."""
             return lambda builder: (
@@ -200,9 +246,13 @@ class MinimalComputer(Computer):
             )
 
         def load_instruction(
-            builder: InstructionSet.Builder, name: str, to_: str
+            builder: InstructionSet.Builder,
+            name: str,
+            to_: str,
+            /,
+            include_index_addressing_modes: bool = False,
         ) -> InstructionSet.Builder:
-            return (
+            instruction_builder = (
                 builder.instruction(name)
                 .mode("immediate")
                 .apply(load_immediate(to_))
@@ -210,8 +260,15 @@ class MinimalComputer(Computer):
                 .apply(load_absolute(to_))
                 .mode("zero_page")
                 .apply(load_zero_page(to_))
-                .end_instruction()
             )
+            if include_index_addressing_modes:
+                instruction_builder = (
+                    instruction_builder.mode("index_x")
+                    .apply(load_indexed(to_, "x"))
+                    .mode("index_y")
+                    .apply(load_indexed(to_, "y"))
+                )
+            return instruction_builder.end_instruction()
 
         def store_instruction(
             builder: InstructionSet.Builder, name: str, from_: str
@@ -226,10 +283,18 @@ class MinimalComputer(Computer):
             )
 
         def load_and_store_instructions(
-            builder: InstructionSet.Builder, reg: str
+            builder: InstructionSet.Builder,
+            reg: str,
+            /,
+            include_index_addressing_modes: bool = False,
         ) -> InstructionSet.Builder:
             assert len(reg) == 1
-            builder = load_instruction(builder, f"ld{reg}", reg)
+            builder = load_instruction(
+                builder,
+                f"ld{reg}",
+                reg,
+                include_index_addressing_modes=include_index_addressing_modes,
+            )
             builder = store_instruction(builder, f"st{reg}", reg)
             return builder
 
@@ -297,7 +362,11 @@ class MinimalComputer(Computer):
         # A X Y load and store instructions
 
         # lda and sta - load and store accumulator
-        builder = load_and_store_instructions(builder, "a")
+        builder = load_and_store_instructions(
+            builder,
+            "a",
+            include_index_addressing_modes=True,
+        )
         # ldx and stx - load and store x
         builder = load_and_store_instructions(builder, "x")
         # ldy and sty - load and store y
@@ -439,6 +508,12 @@ class MinimalComputer(Computer):
 
         def lda_zero_page(self, arg: int | Byte) -> Self:
             return self.instruction("lda").zero_page(arg)
+
+        def lda_index_x(self, arg: int | Word | str) -> Self:
+            return self.instruction("lda").index_x(arg)
+
+        def lda_index_y(self, arg: int | Word | str) -> Self:
+            return self.instruction("lda").index_y(arg)
 
         def sta(self, arg: int | Word | str) -> Self:
             return self.instruction("sta").absolute(arg)

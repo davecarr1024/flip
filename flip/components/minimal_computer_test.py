@@ -105,6 +105,34 @@ def test_lda_zero_page() -> None:
     assert computer.a.value == Byte(0xAB)
 
 
+def test_lda_index_x() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .ldx(0x02)
+        .lda_index_x("data")
+        .hlt()
+        .at(0x100)
+        .label("data")
+        .data(0x10, 0x20, 0x30)
+        .run()
+    )
+    assert computer.a.value == Byte(0x30)
+
+
+def test_lda_index_y() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .ldy(0x02)
+        .lda_index_y("data")
+        .hlt()
+        .at(0x100)
+        .label("data")
+        .data(0x10, 0x20, 0x30)
+        .run()
+    )
+    assert computer.a.value == Byte(0x30)
+
+
 def test_sta_absolute() -> None:
     computer = (
         MinimalComputer.program_builder()

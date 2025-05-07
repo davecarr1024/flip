@@ -12,6 +12,8 @@ instruction_set = (
     .mode("immediate")
     .mode("absolute")
     .mode("zero_page")
+    .mode("index_x")
+    .mode("index_y")
     .instruction("only_supports_immediate")
     .mode("immediate")
     .build()
@@ -90,6 +92,46 @@ def test_instruction_zero_page() -> None:
     ).assemble().memory == {
         Word(0x0000): Byte(0x03),
         Word(0x0001): Byte(0x10),
+    }
+
+
+def test_instruction_index_x_value() -> None:
+    assert program.with_statement(
+        Program.Instruction("lda", Program.Instruction.IndexX(Word(0xBEEF)))
+    ).assemble().memory == {
+        Word(0x0000): Byte(0x04),
+        Word(0x0001): Byte(0xEF),
+        Word(0x0002): Byte(0xBE),
+    }
+
+
+def test_instruction_index_x_ref() -> None:
+    assert program.with_statement(
+        Program.Instruction("lda", Program.Instruction.IndexX("label"))
+    ).at_position(Word(0xBEEF)).with_label("label").assemble().memory == {
+        Word(0x0000): Byte(0x04),
+        Word(0x0001): Byte(0xEF),
+        Word(0x0002): Byte(0xBE),
+    }
+
+
+def test_instruction_index_y_value() -> None:
+    assert program.with_statement(
+        Program.Instruction("lda", Program.Instruction.IndexY(Word(0xBEEF)))
+    ).assemble().memory == {
+        Word(0x0000): Byte(0x05),
+        Word(0x0001): Byte(0xEF),
+        Word(0x0002): Byte(0xBE),
+    }
+
+
+def test_instruction_index_y_ref() -> None:
+    assert program.with_statement(
+        Program.Instruction("lda", Program.Instruction.IndexY("label"))
+    ).at_position(Word(0xBEEF)).with_label("label").assemble().memory == {
+        Word(0x0000): Byte(0x05),
+        Word(0x0001): Byte(0xEF),
+        Word(0x0002): Byte(0xBE),
     }
 
 

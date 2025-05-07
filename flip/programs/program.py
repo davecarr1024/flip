@@ -115,6 +115,44 @@ class Program(Errorable):
             def addressing_mode(self) -> AddressingMode:
                 return AddressingMode.ZERO_PAGE
 
+        @dataclass(frozen=True)
+        class IndexX(Arg):
+            value: str | Word
+
+            @override
+            def bind(
+                self,
+                assembler: "assembler_lib.Assembler",
+            ) -> "assembler_lib.Assembler":
+                match self.value:
+                    case str():
+                        return assembler.with_ref(self.value)
+                    case Word():
+                        return assembler.with_value(self.value)
+
+            @override
+            def addressing_mode(self) -> AddressingMode:
+                return AddressingMode.INDEX_X
+
+        @dataclass(frozen=True)
+        class IndexY(Arg):
+            value: str | Word
+
+            @override
+            def bind(
+                self,
+                assembler: "assembler_lib.Assembler",
+            ) -> "assembler_lib.Assembler":
+                match self.value:
+                    case str():
+                        return assembler.with_ref(self.value)
+                    case Word():
+                        return assembler.with_value(self.value)
+
+            @override
+            def addressing_mode(self) -> AddressingMode:
+                return AddressingMode.INDEX_Y
+
         name: str
         arg: Optional[Arg] = None
 

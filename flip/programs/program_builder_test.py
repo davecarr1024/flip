@@ -96,6 +96,54 @@ def test_zero_page_byte() -> None:
     )
 
 
+def test_index_x_int() -> None:
+    assert program_builder.instruction("lda").index_x(
+        0xBEEF
+    ).build() == program.with_statement(
+        Program.Instruction("lda", Program.Instruction.IndexX(Word(0xBEEF)))
+    )
+
+
+def test_index_x_word() -> None:
+    assert program_builder.instruction("lda").index_x(
+        Word(0xBEEF)
+    ).build() == program.with_statement(
+        Program.Instruction("lda", Program.Instruction.IndexX(Word(0xBEEF)))
+    )
+
+
+def test_index_x_str() -> None:
+    assert program_builder.instruction("lda").index_x(
+        "label"
+    ).build() == program.with_statement(
+        Program.Instruction("lda", Program.Instruction.IndexX("label"))
+    )
+
+
+def test_index_y_int() -> None:
+    assert program_builder.instruction("lda").index_y(
+        0xBEEF
+    ).build() == program.with_statement(
+        Program.Instruction("lda", Program.Instruction.IndexY(Word(0xBEEF)))
+    )
+
+
+def test_index_y_word() -> None:
+    assert program_builder.instruction("lda").index_y(
+        Word(0xBEEF)
+    ).build() == program.with_statement(
+        Program.Instruction("lda", Program.Instruction.IndexY(Word(0xBEEF)))
+    )
+
+
+def test_index_y_str() -> None:
+    assert program_builder.instruction("lda").index_y(
+        "label"
+    ).build() == program.with_statement(
+        Program.Instruction("lda", Program.Instruction.IndexY("label"))
+    )
+
+
 def test_label() -> None:
     assert program_builder.label("label").build() == program.with_label("label")
 
