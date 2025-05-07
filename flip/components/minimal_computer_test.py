@@ -105,6 +105,34 @@ def test_lda_zero_page() -> None:
     assert computer.a.value == Byte(0xAB)
 
 
+def test_sta_absolute() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .lda(0xAB)
+        .sta("label")
+        .hlt()
+        .at(0xBEEF)
+        .label("label")
+        .data(Byte(0x00))
+        .run()
+    )
+    assert computer.memory[Word(0xBEEF)] == Byte(0xAB)
+
+
+def test_sta_zero_page() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .at(0xBEEF)
+        .lda(0xAB)
+        .sta_zero_page(0x12)
+        .hlt()
+        .load()
+    )
+    computer.program_counter.value = Word(0xBEEF)
+    computer.tick_until_halt()
+    assert computer.memory[Word(0x0012)] == Byte(0xAB)
+
+
 def test_jmp_absolute() -> None:
     computer = MinimalComputer.program_builder().jmp(0xBEEF).at(0xBEEF).hlt().run()
     assert computer.program_counter.value == Word(0xBEF0)

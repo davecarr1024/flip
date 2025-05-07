@@ -188,6 +188,15 @@ class MinimalComputer(Computer):
             .apply(load_immediate("memory.address.low"))
             .step("memory.address.high.reset")
             .apply(transfer_byte("memory", "a"))
+            # sta - store accumulator
+            .instruction("sta")
+            .mode("absolute")
+            .apply(load_word_at_pc("memory.address"))
+            .apply(transfer_byte("a", "memory"))
+            .mode("zero_page")
+            .apply(load_immediate("memory.address.low"))
+            .step("memory.address.high.reset")
+            .apply(transfer_byte("a", "memory"))
             # jmp - jump to address
             .instruction("jmp")
             .mode("absolute")
@@ -357,6 +366,12 @@ class MinimalComputer(Computer):
 
         def lda_zero_page(self, arg: int | Byte) -> Self:
             return self.instruction("lda").zero_page(arg)
+
+        def sta(self, arg: int | Word | str) -> Self:
+            return self.instruction("sta").absolute(arg)
+
+        def sta_zero_page(self, arg: int | Byte) -> Self:
+            return self.instruction("sta").zero_page(arg)
 
         def jmp(self, arg: int | Word | str) -> Self:
             return self.instruction("jmp").absolute(arg)
