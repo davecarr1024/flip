@@ -2,7 +2,7 @@ from typing import override
 
 import pytest
 
-from flip.components import Component
+from flip.components import Component, Control, Status
 
 
 def test_ctor_name() -> None:
@@ -216,3 +216,40 @@ def test_setting_enable_logging_sets_parent_enable_logging() -> None:
     c.enable_logging = False
     assert not p.enable_logging
     assert not c.enable_logging
+
+
+def test_children_by_name_cache_invalidation() -> None:
+    c1 = Component(name="c1")
+    p = Component(name="p", children=[c1])
+    assert p.children_by_name == {"c1": c1}
+    c2 = Component(name="c2")
+    p.children = {c1, c2}
+    assert p.children_by_name == {"c1": c1, "c2": c2}
+
+
+def test_path_cache_invalidation() -> None:
+    p = Component(name="p")
+    c = Component(name="c", parent=p)
+    assert c.path == "c"
+    Component(name="g", children=[p])
+    assert c.path == "p.c"
+
+
+def test_control_cache_invalidation() -> None:
+    c = Component(name="c")
+    c1 = Control(name="c1", parent=c)
+    assert c.controls == {c1}
+    assert c.controls_by_path == {"c1": c1}
+    c2 = Control(name="c2", parent=c)
+    assert c.controls == {c1, c2}
+    assert c.controls_by_path == {"c1": c1, "c2": c2}
+
+
+def test_status_cache_invalidation() -> None:
+    c = Component(name="c")
+    s1 = Status(name="s1", parent=c)
+    assert c.statuses == {s1}
+    assert c.statuses_by_path == {"s1": s1}
+    s2 = Status(name="s2", parent=c)
+    assert c.statuses == {s1, s2}
+    assert c.statuses_by_path == {"s1": s1, "s2": s2}

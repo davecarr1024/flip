@@ -1,8 +1,10 @@
+from functools import cache
 from typing import Optional, override
 
 from flip.components.bus import Bus
 from flip.components.component import Component
 from flip.components.controller.assembler import Assembler
+from flip.components.controller.instruction_memory import InstructionMemory
 from flip.components.controller.status_register import StatusRegister
 from flip.components.counter import Counter
 from flip.components.register import Register
@@ -17,6 +19,13 @@ class Controller(Component):
     class MissingStatusError(KeyError): ...
 
     class MissingControlError(KeyError): ...
+
+    @staticmethod
+    @cache
+    def _assemble_instruction_memory(
+        instruction_set: InstructionSet,
+    ) -> InstructionMemory:
+        return Assembler(instruction_set).assemble()
 
     def __init__(
         self,
@@ -37,9 +46,7 @@ class Controller(Component):
             parent=self,
             bus=bus,
         )
-        self.__instruction_memory = Assembler(
-            instruction_set=instruction_set,
-        ).assemble()
+        self.__instruction_memory = self._assemble_instruction_memory(instruction_set)
         self.__status = StatusRegister(
             name="status",
             parent=self,

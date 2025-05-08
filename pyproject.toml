@@ -16,6 +16,8 @@ pytest-repeat = "^0.9.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest-repeat = "^0.9.4"
+pytest-profiling = "^1.8.1"
+pytest-xdist = "^3.6.1"
 
 [tool.black]
 line-length = 88
@@ -58,14 +60,14 @@ typeCheckingMode = "strict"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-s --capture=no -vv --cov=flip --cov-report=term-missing"
+addopts = "-s --capture=no -vv"
 # addopts = "-s --capture=no -vv flip/components/nand_test.py::test_nand"
 
 [tool.poe.tasks]
 format = "black ."
 lint = "ruff check --fix flip"
 typecheck = "pyright"
-test = "pytest"
+test = "pytest --cov=flip --cov-report=term-missing"
 all = ["format", "lint", "typecheck", "test"]
 watch = "pyright --watch"
 dump = "./dump.sh"

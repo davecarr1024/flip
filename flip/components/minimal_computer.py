@@ -1,3 +1,4 @@
+from functools import cache
 from typing import Callable, Iterable, Mapping, Optional, Self, Union, override
 
 from flip.bytes import Byte, Word
@@ -21,6 +22,11 @@ class MinimalComputer(Computer):
     @override
     @classmethod
     def instruction_set(cls) -> InstructionSet:
+        return MinimalComputer._cached_instruction_set()
+
+    @staticmethod
+    @cache
+    def _cached_instruction_set() -> InstructionSet:
         def transfer_byte(from_: str, to: str) -> _Apply:
             """Transfer a byte from one byte register to another."""
             return lambda builder: (
@@ -114,7 +120,7 @@ class MinimalComputer(Computer):
                 .step(
                     f"{index}.write",
                     "alu.rhs.read",
-                    *cls._encode_alu_opcode_controls("adc"),
+                    *MinimalComputer._encode_alu_opcode_controls("adc"),
                 )
                 # Copy result to memory.address.low.
                 .apply(transfer_byte("alu.output", "memory.address.low"))
@@ -129,7 +135,7 @@ class MinimalComputer(Computer):
                     "alu.rhs.reset",
                 )
                 # Add carry to high address-in byte.
-                .step(*cls._encode_alu_opcode_controls("adc"))
+                .step(*MinimalComputer._encode_alu_opcode_controls("adc"))
                 # Copy result to memory.address.high.
                 .apply(transfer_byte("alu.output", "memory.address.high"))
             )
@@ -220,7 +226,11 @@ class MinimalComputer(Computer):
                 # Doing these on the same step is ok because the ALU will
                 # load the lhs during tick_write/read, and then run the operation
                 # during tick_process.
-                .step(*cls._encode_alu_opcode_controls(op), "a.write", "alu.lhs.read")
+                .step(
+                    *MinimalComputer._encode_alu_opcode_controls(op),
+                    "a.write",
+                    "alu.lhs.read",
+                )
                 # alu.output -> a
                 .apply(transfer_byte("alu.output", "a"))
             )
@@ -477,7 +487,7 @@ class MinimalComputer(Computer):
             # always set carry to ensure we don't borrow
             # discard sbc result
             .step(
-                *cls._encode_alu_opcode_controls("sbc"),
+                *MinimalComputer._encode_alu_opcode_controls("sbc"),
                 "a.write",
                 "alu.lhs.read",
                 "alu.carry_in",
@@ -489,7 +499,7 @@ class MinimalComputer(Computer):
             # always set carry to ensure we don't borrow
             # discard sbc result
             .step(
-                *cls._encode_alu_opcode_controls("sbc"),
+                *MinimalComputer._encode_alu_opcode_controls("sbc"),
                 "a.write",
                 "alu.lhs.read",
                 "alu.carry_in",

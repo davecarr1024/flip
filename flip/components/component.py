@@ -21,11 +21,37 @@ class Component(Validatable):
         self.__parent: Optional[Component] = None
         self.__children: frozenset[Component] = frozenset()
         self.__enable_logging: bool = False
+
+        self.__path: Optional[str] = None
+        self.__children_by_name: Optional[Mapping[str, Component]] = None
+        self.__controls: Optional[frozenset["control.Control"]] = None
+        self.__controls_by_path: Optional[Mapping[str, "control.Control"]] = None
+        self.__statuses: Optional[frozenset["status.Status"]] = None
+        self.__statuses_by_path: Optional[Mapping[str, "status.Status"]] = None
+
         with self._pause_validation():
             if parent is not None:
                 self.parent = parent
             if children is not None:
                 self.children = children
+
+    def _invalidate_cache(
+        self,
+        traversed: Optional[frozenset["Component"]] = None,
+    ) -> None:
+        if traversed is not None and self in traversed:
+            return
+        traversed_ = (traversed or frozenset()) | (frozenset({self}))
+        self.__path = None
+        self.__children_by_name = None
+        self.__controls = None
+        self.__controls_by_path = None
+        self.__statuses = None
+        self.__statuses_by_path = None
+        if self.parent is not None:
+            self.parent._invalidate_cache(traversed_)
+        for child in self.children:
+            child._invalidate_cache(traversed_)
 
     @override
     def __eq__(self, other: object) -> bool:
@@ -65,12 +91,14 @@ class Component(Validatable):
 
     @property
     def path(self) -> str:
-        if self.parent is None:
-            return ""
-        elif self.parent.path == "":
-            return self.name
-        else:
-            return f"{self.parent.path}.{self.name}"
+        if self.__path is None:
+            if self.parent is None:
+                self.__path = ""
+            elif self.parent.path == "":
+                self.__path = self.name
+            else:
+                self.__path = f"{self.parent.path}.{self.name}"
+        return self.__path
 
     @property
     def parent(self) -> Optional["Component"]:
@@ -80,6 +108,7 @@ class Component(Validatable):
     def parent(self, parent: Optional["Component"]) -> None:
         if parent != self.__parent:
             with self._pause_validation():
+                self._invalidate_cache()
                 if self.__parent is not None:
                     self.__parent.remove_child(self)
                 self.__parent = parent
@@ -95,6 +124,7 @@ class Component(Validatable):
         children_ = frozenset(children)
         if children_ != self.__children:
             with self._pause_validation():
+                self._invalidate_cache()
                 added_children = children_ - self.__children
                 removed_children = self.__children - children_
                 self.__children = children_
@@ -111,7 +141,9 @@ class Component(Validatable):
 
     @property
     def children_by_name(self) -> Mapping[str, "Component"]:
-        return {child.name: child for child in self.children}
+        if self.__children_by_name is None:
+            self.__children_by_name = {child.name: child for child in self.children}
+        return self.__children_by_name
 
     def child(self, name: str) -> "Component":
         if (dot_pos := name.find(".")) != -1:
@@ -138,23 +170,33 @@ class Component(Validatable):
 
     @property
     def controls(self) -> frozenset["control.Control"]:
-        return frozenset[control.Control]().union(
-            *[child.controls for child in self.children]
-        )
+        if self.__controls is None:
+            self.__controls = frozenset[control.Control]().union(
+                *[child.controls for child in self.children]
+            )
+        return self.__controls
 
     @property
     def controls_by_path(self) -> Mapping[str, "control.Control"]:
-        return {control.path: control for control in self.controls}
+        if self.__controls_by_path is None:
+            self.__controls_by_path = {
+                control.path: control for control in self.controls
+            }
+        return self.__controls_by_path
 
     @property
     def statuses(self) -> frozenset["status.Status"]:
-        return frozenset[status.Status]().union(
-            *[child.statuses for child in self.children]
-        )
+        if self.__statuses is None:
+            self.__statuses = frozenset[status.Status]().union(
+                *[child.statuses for child in self.children]
+            )
+        return self.__statuses
 
     @property
     def statuses_by_path(self) -> Mapping[str, "status.Status"]:
-        return {status.path: status for status in self.statuses}
+        if self.__statuses_by_path is None:
+            self.__statuses_by_path = {status.path: status for status in self.statuses}
+        return self.__statuses_by_path
 
     @final
     def tick_control(self) -> None:
