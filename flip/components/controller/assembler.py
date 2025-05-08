@@ -44,15 +44,3 @@ class Assembler(Errorable):
                             )
                             data[address] = self.__format.encode_controls(step)
         return InstructionMemory(data=data, format=self.__format)
-        # data = dict[int, int]()
-        # for instruction in self.__instruction_set:
-        #     for statuses in self._expand_statuses(dict(instruction.statuses)):
-        #         for step_index, step in enumerate(instruction):
-        #             data[
-        #                 self.__format.encode_address(
-        #                     instruction.opcode,
-        #                     statuses,
-        #                     Byte(step_index),
-        #                 )
-        #             ] = self.__format.encode_controls(step.controls)
-        # return InstructionMemory(data=data, format=self.__format)
