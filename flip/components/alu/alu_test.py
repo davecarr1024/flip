@@ -145,14 +145,20 @@ def test_encode_opcode_controls(subtests: SubTests) -> None:
 
 
 def test_rhs_one() -> None:
+    # rhs = 0, rhs_one = False
     alu.rhs = Byte(0x00)
     alu.rhs_one = False
     assert alu.rhs == Byte(0x00)
     assert not alu.rhs_one
+    # tick - rhs isn't changed
     alu.tick()
     assert alu.rhs == Byte(0x00)
     assert not alu.rhs_one
+    # rhs_one = True
     alu.rhs_one = True
+    assert alu.rhs == Byte(0x00)
+    assert alu.rhs_one
+    # tick - rhs is changed to 1 and control resets
     alu.tick()
     assert alu.rhs == Byte(0x01)
     assert not alu.rhs_one
