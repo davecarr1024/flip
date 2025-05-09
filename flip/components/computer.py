@@ -23,6 +23,7 @@ from flip.components.controller.controller import Controller
 from flip.components.memory import Memory
 from flip.components.program_counter import ProgramCounter
 from flip.components.register import Register
+from flip.components.result_analyzer import ResultAnalyzer
 from flip.components.word_register import WordRegister
 from flip.instructions import InstructionSet
 from flip.programs import Program, ProgramBuilder
@@ -91,6 +92,11 @@ class Computer(Component, ABC):
             operation_set=self._alu_operation_set(),
             parent=self,
         )
+        self.__result_analyzer = ResultAnalyzer(
+            name="result_analyzer",
+            bus=self.__bus,
+            parent=self,
+        )
         self.__halt = Control(name="halt", parent=self, auto_clear=False)
         if data is not None:
             self.load(data)
@@ -124,6 +130,10 @@ class Computer(Component, ABC):
     @property
     def program_counter(self) -> ProgramCounter:
         return self.__program_counter
+
+    @property
+    def result_analyzer(self) -> ResultAnalyzer:
+        return self.__result_analyzer
 
     def load(self, data: Mapping[Word, Byte] | Program | ProgramBuilder) -> None:
         self._log(f"loading data {data}")

@@ -232,7 +232,12 @@ class MinimalComputer(Computer):
                     "alu.lhs.read",
                 )
                 # alu.output -> a
-                .apply(transfer_byte("alu.output", "a"))
+                # read result_analyzer to set statuses
+                .step(
+                    "alu.output.write",
+                    "a.read",
+                    "result_analyzer.read",
+                )
             )
 
         def a_alu_operation_immediate(op: str) -> _Apply:
@@ -492,6 +497,12 @@ class MinimalComputer(Computer):
                 "alu.lhs.read",
                 "alu.carry_in",
             )
+            # Copy result to result_analyzer to set statuses.
+            # Note that we don't copy to a.
+            .step(
+                "alu.output.write",
+                "result_analyzer.read",
+            )
             .mode("absolute")
             # Load byte from memory at address at pc to rhs.
             .apply(load_absolute("alu.rhs"))
@@ -504,17 +515,43 @@ class MinimalComputer(Computer):
                 "alu.lhs.read",
                 "alu.carry_in",
             )
+            # Copy result to result_analyzer to set statuses.
+            # Note that we don't copy to a.
+            .step(
+                "alu.output.write",
+                "result_analyzer.read",
+            )
             .end_instruction()
         )
 
         # beq/bne - branch on zero flag
-        builder = conditional_jump_instruction(builder, "beq", "bne", "alu.zero")
+        builder = conditional_jump_instruction(
+            builder,
+            "beq",
+            "bne",
+            "result_analyzer.zero",
+        )
         # bmi/bpl - branch on negative flag
-        builder = conditional_jump_instruction(builder, "bmi", "bpl", "alu.negative")
+        builder = conditional_jump_instruction(
+            builder,
+            "bmi",
+            "bpl",
+            "result_analyzer.negative",
+        )
         # bcs/bcc - branch on carry flag
-        builder = conditional_jump_instruction(builder, "bcs", "bcc", "alu.carry_out")
+        builder = conditional_jump_instruction(
+            builder,
+            "bcs",
+            "bcc",
+            "alu.carry_out",
+        )
         # bvs/bvc - branch on overflow flag
-        builder = conditional_jump_instruction(builder, "bvs", "bvc", "alu.overflow")
+        builder = conditional_jump_instruction(
+            builder,
+            "bvs",
+            "bvc",
+            "alu.overflow",
+        )
 
         # header - steps to run before every instruction
         instruction_set = (

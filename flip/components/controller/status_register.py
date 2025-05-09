@@ -79,13 +79,13 @@ class StatusRegister(Register):
         def default(cls) -> "StatusRegister.Format":
             return cls(
                 _status_indices={
-                    "alu.negative": 7,
+                    "result_analyzer.negative": 7,
                     "alu.overflow": 6,
                     # 5: unused
                     # 4: unused or "break"
                     # 3: unused or "decimal mode"
                     # 2: maybe "interrupt_disable" (future use)
-                    "alu.zero": 1,
+                    "result_analyzer.zero": 1,
                     "alu.carry_out": 0,
                 }
             )

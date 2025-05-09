@@ -9,6 +9,8 @@ def test_statuses() -> None:
         "alu.negative",
         "alu.overflow",
         "alu.zero",
+        "result_analyzer.negative",
+        "result_analyzer.zero",
     }
 
 
