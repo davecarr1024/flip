@@ -114,3 +114,36 @@ def test_root_status_not_found() -> None:
     status.latch = True
     with pytest.raises(StatusRegister.Error):
         root.tick()
+
+
+def test_disable_latch() -> None:
+    # set initial state: tax_enable = False
+    status.status_values = {"tax_enable": False}
+    assert status.value == Byte(0x00)
+
+    # enable tax_enable and set latch but also
+    # set disable latch
+    tax_enable.value = True
+    assert tax_enable.value is True
+    status.latch = True
+    assert status.latch
+    status.disable_latch = True
+    assert status.disable_latch
+    root.tick()
+
+    # verify that status was not latched
+    assert status.value == Byte(0x00)
+
+    # enable tax_enable and set latch and
+    # don't set disable latch
+    tax_enable.value = True
+    assert tax_enable.value is True
+    status.latch = True
+    assert status.latch
+    status.disable_latch = False
+    assert not status.disable_latch
+    root.tick()
+
+    # verify that status was latched
+    assert status.value == Byte(0x01)
+    assert status.status_values == {"tax_enable": True}

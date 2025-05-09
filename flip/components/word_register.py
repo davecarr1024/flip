@@ -10,19 +10,23 @@ class WordRegister(Component):
     def __init__(
         self,
         bus: Bus,
-        name: Optional[str] = None,
+        name: str,
         parent: Optional[Component] = None,
+        low_value: Optional[Byte] = None,
+        high_value: Optional[Byte] = None,
     ) -> None:
         super().__init__(name=name, parent=parent)
         self.__low = Register(
             name="low",
             parent=self,
             bus=bus,
+            value=low_value,
         )
         self.__high = Register(
             name="high",
             parent=self,
             bus=bus,
+            value=high_value,
         )
 
     @property

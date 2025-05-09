@@ -270,11 +270,14 @@ class Component(Validatable):
     @final
     @contextmanager
     def _log_context(self, message: str) -> Iterator[None]:
+        path = self.path
         try:
-            self.__log_context.append(f"{self.path}.{message}")
+            if path != "":
+                self.__log_context.append(f"{path}.{message}")
             yield
         finally:
-            self.__log_context.pop()
+            if path != "":
+                self.__log_context.pop()
 
     @final
     def _log(self, message: str) -> None:

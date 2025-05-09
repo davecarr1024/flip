@@ -26,3 +26,12 @@ def test_high() -> None:
     reg.high = Byte(0x12)
     assert reg.high == Byte(0x12)
     assert reg.value == Word(0x1200)
+
+
+def test_ctor_value() -> None:
+    assert WordRegister(
+        name="reg",
+        bus=Bus(),
+        low_value=Byte(0x34),
+        high_value=Byte(0x12),
+    ).value == Word(0x1234)

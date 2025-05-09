@@ -72,3 +72,7 @@ def test_reset() -> None:
     reg.reset = True
     reg.tick()
     assert reg.value == Byte(0)
+
+
+def test_ctor_value() -> None:
+    assert Register(name="reg", bus=Bus(), value=Byte(0x12)).value == Byte(0x12)

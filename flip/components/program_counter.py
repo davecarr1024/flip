@@ -11,7 +11,7 @@ class ProgramCounter(WordRegister):
     def __init__(
         self,
         bus: Bus,
-        name: Optional[str] = None,
+        name: str,
         parent: Optional[Component] = None,
     ) -> None:
         super().__init__(bus=bus, name=name, parent=parent)

@@ -109,6 +109,16 @@ class StatusRegister(Register):
             # We manually handle clearing the latch in the clear phase.
             auto_clear=False,
         )
+        self.__disable_latch = Control(
+            name="disable_latch",
+            parent=self,
+            # We manually handle clearing the latch in the clear phase.
+            auto_clear=False,
+        )
+
+    @property
+    def format(self) -> "StatusRegister.Format":
+        return self.__format
 
     @property
     def latch(self) -> bool:
@@ -117,6 +127,14 @@ class StatusRegister(Register):
     @latch.setter
     def latch(self, value: bool) -> None:
         self.__latch.value = value
+
+    @property
+    def disable_latch(self) -> bool:
+        return self.__disable_latch.value
+
+    @disable_latch.setter
+    def disable_latch(self, value: bool) -> None:
+        self.__disable_latch.value = value
 
     @property
     def status_values(self) -> Mapping[str, bool]:
@@ -136,7 +154,9 @@ class StatusRegister(Register):
         next tick cycle starts and Controller starts decoding the instruction.
         """
         super()._tick_clear()
-        if self.latch:
+        if self.latch and self.disable_latch:
+            self._log("Latching disabled.")
+        if self.latch and not self.disable_latch:
             for status in self.__format:
                 if status not in self.root.statuses_by_path:
                     raise self._error(
@@ -150,6 +170,8 @@ class StatusRegister(Register):
                 }
             )
             self._log(f"Latched status values: {self.status_values}")
-            # Manually clear the latch. Auto-clearing is disabled because we
-            # want to manually handle latching at the very end of the tick cycle.
-            self.latch = False
+
+        # Manually clear the latch controls. Auto-clearing is disabled because we
+        # want to manually handle latching at the very end of the tick cycle.
+        self.latch = False
+        self.disable_latch = False

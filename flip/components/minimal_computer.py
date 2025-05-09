@@ -5,6 +5,7 @@ from flip.bytes import Byte, Word
 from flip.components.component import Component
 from flip.components.computer import Computer
 from flip.components.register import Register
+from flip.components.stack_pointer import StackPointer
 from flip.instructions import InstructionImpl, InstructionMode, InstructionSet, Step
 from flip.programs import Program, ProgramBuilder
 
@@ -333,6 +334,52 @@ class MinimalComputer(Computer):
                 .step("program_counter.increment")
             )
 
+        def push(from_: str) -> _Apply:
+            """Push a byte onto the stack."""
+            return lambda builder: (
+                builder
+                # Copy the stack pointer to memory.address.
+                .apply(transfer_word("stack_pointer", "memory.address"))
+                # Copy the {from} to the stack pointer and decrement stack pointer.
+                .apply(
+                    transfer_byte(
+                        from_,
+                        "memory",
+                        extra_controls=["stack_pointer.decrement"],
+                    )
+                )
+            )
+
+        def pull(
+            to: str,
+            disable_latch: bool = False,
+        ) -> _Apply:
+            """Pull a byte from the stack."""
+            return lambda builder: (
+                builder
+                # Increment the stack pointer and copy the high address byte.
+                # It's ok to do these on the same step because sp.high is constant.
+                .apply(
+                    transfer_byte(
+                        "stack_pointer.high",
+                        "memory.address.high",
+                        extra_controls=["stack_pointer.increment"],
+                    )
+                )
+                # Copy the low byte to memory.address.low.
+                .apply(transfer_byte("stack_pointer.low", "memory.address.low"))
+                # Load byte at memory.address to {to}.
+                .apply(
+                    transfer_byte(
+                        "memory",
+                        to,
+                        extra_controls=(
+                            ["controller.status.disable_latch"] if disable_latch else []
+                        ),
+                    )
+                )
+            )
+
         def transfer_instruction(
             builder: InstructionSet.Builder,
             name: str,
@@ -537,8 +584,18 @@ class MinimalComputer(Computer):
         builder: InstructionSet.Builder = InstructionSet.Builder()
         # nop - no operation
         builder = builder.instruction("nop").mode("none").step().end_instruction()
-        # hlt - halt and catch fire
-        builder = builder.instruction("hlt").mode("none").step("halt").end_instruction()
+        # hlt - halt
+        builder = (
+            builder.instruction("hlt")
+            .mode("none")
+            .step(
+                # Halt control disables tick_until_halt and stops the computer.
+                "halt",
+                # Don't latch status on halt - we want to be able to inspect it.
+                "controller.status.disable_latch",
+            )
+            .end_instruction()
+        )
 
         # A X Y transfer instructions
 
@@ -687,6 +744,40 @@ class MinimalComputer(Computer):
             "bvs",
             "bvc",
             "alu.overflow",
+        )
+
+        # Stack operations.
+
+        # pha - push accumulator
+        builder = (
+            builder.instruction("pha").mode("none").apply(push("a")).end_instruction()
+        )
+
+        # pla - pull accumulator
+        builder = (
+            builder.instruction("pla").mode("none").apply(pull("a")).end_instruction()
+        )
+
+        # php - push processor status
+        builder = (
+            builder.instruction("php")
+            .mode("none")
+            .apply(push("controller.status"))
+            .end_instruction()
+        )
+
+        # plp - pull processor status
+        builder = (
+            builder.instruction("plp")
+            .mode("none")
+            .apply(
+                pull(
+                    "controller.status",
+                    # Disable latching the status register because we just pulled it.
+                    disable_latch=True,
+                )
+            )
+            .end_instruction()
         )
 
         # header - steps to run before every instruction
@@ -868,6 +959,18 @@ class MinimalComputer(Computer):
         def dey(self) -> Self:
             return self.instruction("dey")
 
+        def pha(self) -> Self:
+            return self.instruction("pha")
+
+        def pla(self) -> Self:
+            return self.instruction("pla")
+
+        def php(self) -> Self:
+            return self.instruction("php")
+
+        def plp(self) -> Self:
+            return self.instruction("plp")
+
         def load(self) -> "MinimalComputer":
             return MinimalComputer(data=self.build())
 
@@ -885,6 +988,7 @@ class MinimalComputer(Computer):
         name: Optional[str] = None,
         children: Optional[Iterable[Component]] = None,
         data: Optional[Mapping[Word, Byte] | Program | ProgramBuilder] = None,
+        stack_address_high_value: Optional[Byte] = None,
     ) -> None:
         super().__init__(
             name=name,
@@ -900,6 +1004,17 @@ class MinimalComputer(Computer):
             "y": self.__y,
         }
         self.__arg_buffer = self._create_word_register("arg_buffer")
+        self.__stack_pointer = StackPointer(
+            name="stack_pointer",
+            bus=self._bus,
+            parent=self,
+            low_value=Byte(0xFF),
+            high_value=(
+                stack_address_high_value
+                if stack_address_high_value is not None
+                else Byte(0x01)
+            ),
+        )
 
     @property
     def a(self) -> Register:
@@ -916,3 +1031,7 @@ class MinimalComputer(Computer):
     @property
     def registers_by_name(self) -> Mapping[str, Register]:
         return self.__registers_by_name
+
+    @property
+    def stack_pointer(self) -> StackPointer:
+        return self.__stack_pointer

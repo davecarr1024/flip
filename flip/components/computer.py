@@ -102,6 +102,10 @@ class Computer(Component, ABC):
             self.load(data)
 
     @property
+    def _bus(self) -> Bus:
+        return self.__bus
+
+    @property
     def halt(self) -> bool:
         return self.__halt.value
 

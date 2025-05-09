@@ -8,5 +8,6 @@ from .minimal_computer import MinimalComputer as MinimalComputer
 from .program_counter import ProgramCounter as ProgramCounter
 from .register import Register as Register
 from .result_analyzer import ResultAnalyzer as ResultAnalyzer
+from .stack_pointer import StackPointer as StackPointer
 from .status import Status as Status
 from .word_register import WordRegister as WordRegister

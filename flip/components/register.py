@@ -16,10 +16,11 @@ class Register(component.Component):
         name: str,
         bus: Bus,
         parent: Optional[component.Component] = None,
+        value: Optional[Byte] = None,
     ) -> None:
         super().__init__(name=name, parent=parent)
         self.__bus = bus
-        self.__value = Byte(0)
+        self.__value = value if value is not None else Byte(0)
         self.__write = Control(name="write", parent=self)
         self.__read = Control(name="read", parent=self)
         self.__reset = Control(name="reset", parent=self)

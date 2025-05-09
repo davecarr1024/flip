@@ -1171,3 +1171,63 @@ def test_decrement(subtests: SubTests) -> None:
                 status_values = computer.controller.status.status_values
                 assert status_values["result_analyzer.zero"] == zero
                 assert status_values["result_analyzer.negative"] == negative
+
+
+def test_pha() -> None:
+    computer = MinimalComputer.program_builder().lda(0x01).pha().hlt().run()
+    assert computer.memory[Word(0x01FF)] == Byte(0x01)
+    assert computer.stack_pointer.value == Word(0x01FE)
+
+
+def test_pla() -> None:
+    computer = (
+        MinimalComputer.program_builder().lda(0x01).pha().lda(0x02).pla().hlt().run()
+    )
+    assert computer.a.value == Byte(0x01)
+
+
+def test_php() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0: P = Z
+        .lda(0x00)
+        # push P = Z
+        .php()
+        # a = FF: P = N
+        .lda(0xFF)
+        .hlt()
+        .run()
+    )
+    # expect P = Z is on the stack
+    assert computer.memory[Word(0x01FF)] == computer.controller.status.format.encode(
+        {"result_analyzer.zero": True}
+    )
+    assert computer.stack_pointer.value == Word(0x01FE)
+    # expect current P = N
+    assert (
+        computer.controller.status.format.encode({"result_analyzer.negative": True})
+        == computer.controller.status.value
+    )
+
+
+def test_plp() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        # a = 0: P = Z
+        .lda(0x00)
+        # push P = Z
+        .php()
+        # a = FF: P = N
+        .lda(0xFF)
+        # pull P = Z
+        .plp()
+        .hlt()
+        .run()
+    )
+    # expect P = Z
+    assert (
+        computer.controller.status.format.encode({"result_analyzer.zero": True})
+        == computer.controller.status.value
+    ), str(computer.controller.status.status_values)
+    # expect A = FF - N
+    assert computer.a.value == Byte(0xFF)
