@@ -280,7 +280,7 @@ class Component(Validatable):
                 self.__log_context.pop()
 
     @final
-    def _log(self, message: str) -> None:
+    def _log(self, message: str) -> None:  # pragma: no cover
         if not self.enable_logging:
             return
         for tabs, context in enumerate(self.__log_context):

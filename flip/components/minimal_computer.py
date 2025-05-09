@@ -780,6 +780,37 @@ class MinimalComputer(Computer):
             .end_instruction()
         )
 
+        # jsr - jump to subroutine
+        builder = (
+            builder.instruction("jsr")
+            .mode("absolute")
+            # Load the low address byte to a buffer.
+            .apply(load_immediate("arg_buffer.low"))
+            # Now PC is at the desired return point (the final PC-1).
+            # Push the PC low byte.
+            .apply(push("program_counter.low"))
+            # Push the PC high byte.
+            .apply(push("program_counter.high"))
+            # Load the high address byte to PC high.
+            .apply(load_immediate("program_counter.high"))
+            # Load the low address byte to PC low.
+            .apply(transfer_byte("arg_buffer.low", "program_counter.low"))
+            .end_instruction()
+        )
+
+        # rts - return from subroutine
+        builder = (
+            builder.instruction("rts")
+            .mode("none")
+            # Pull the PC high byte.
+            .apply(pull("program_counter.high"))
+            # Pull the PC low byte.
+            .apply(pull("program_counter.low"))
+            # Increment the PC.
+            .step("program_counter.increment")
+            .end_instruction()
+        )
+
         # header - steps to run before every instruction
         instruction_set = (
             builder.header()
@@ -970,6 +1001,12 @@ class MinimalComputer(Computer):
 
         def plp(self) -> Self:
             return self.instruction("plp")
+
+        def jsr(self, arg: int | Word | str) -> Self:
+            return self.instruction("jsr").absolute(arg)
+
+        def rts(self) -> Self:
+            return self.instruction("rts")
 
         def load(self) -> "MinimalComputer":
             return MinimalComputer(data=self.build())

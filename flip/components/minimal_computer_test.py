@@ -1231,3 +1231,42 @@ def test_plp() -> None:
     ), str(computer.controller.status.status_values)
     # expect A = FF - N
     assert computer.a.value == Byte(0xFF)
+
+
+def test_jsr() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .lda(0x01)
+        .jsr("subroutine")
+        .jsr("subroutine")
+        .hlt()
+        .label("subroutine")
+        .inc()
+        .rts()
+        .run()
+    )
+    assert computer.a.value == Byte(0x03)
+
+
+def test_nested_jsr() -> None:
+    computer = (
+        MinimalComputer.program_builder()
+        .lda(0x01)
+        .ldx(0x01)
+        .jsr("inc_x_once_and_a_twice")
+        .hlt()
+        .label("inc_x_once_and_a_twice")
+        .jsr("inc_x")
+        .jsr("inc_a")
+        .jsr("inc_a")
+        .rts()
+        .label("inc_x")
+        .inx()
+        .rts()
+        .label("inc_a")
+        .inc()
+        .rts()
+        .run()
+    )
+    assert computer.a.value == Byte(0x03)
+    assert computer.x.value == Byte(0x02)
