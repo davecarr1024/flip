@@ -1,5 +1,5 @@
 from dataclasses import dataclass, replace
-from typing import Optional, Self
+from typing import Callable, Optional, Self
 
 from flip.bytes import Byte, Word
 from flip.core import Error, Errorable
@@ -127,3 +127,8 @@ class ProgramBuilder(Errorable):
     def build(self) -> Program:
         self = self._collapse_pending_instruction()
         return self.program
+
+    type Statement = Callable[[Self], Self]
+
+    def apply[R](self, statement: Statement) -> Self:
+        return statement(self)

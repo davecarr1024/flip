@@ -1062,11 +1062,16 @@ def test_lda_index_sets_status(subtests: SubTests) -> None:
 
 
 def test_increment(subtests: SubTests) -> None:
-    for instruction, register in list[tuple[str, str]](
+    for instruction, register in list[
+        tuple[
+            MinimalComputer.ProgramBuilder.Statement,
+            str,
+        ]
+    ](
         [
-            ("inc", "a"),
-            ("inx", "x"),
-            ("iny", "y"),
+            (lambda b: b.inc(), "a"),
+            (lambda b: b.inx(), "x"),
+            (lambda b: b.iny(), "y"),
         ]
     ):
         for value, expected, zero, negative in list[tuple[Byte, Byte, bool, bool]](
@@ -1102,7 +1107,7 @@ def test_increment(subtests: SubTests) -> None:
                 computer = (
                     MinimalComputer.program_builder()
                     .instruction(f"ld{register}", value)
-                    .instruction(instruction)
+                    .apply(instruction)
                     .hlt()
                     .run()
                 )
@@ -1113,11 +1118,16 @@ def test_increment(subtests: SubTests) -> None:
 
 
 def test_decrement(subtests: SubTests) -> None:
-    for instruction, register in list[tuple[str, str]](
+    for instruction, register in list[
+        tuple[
+            MinimalComputer.ProgramBuilder.Statement,
+            str,
+        ]
+    ](
         [
-            ("dec", "a"),
-            ("dex", "x"),
-            ("dey", "y"),
+            (lambda b: b.dec(), "a"),
+            (lambda b: b.dex(), "x"),
+            (lambda b: b.dey(), "y"),
         ]
     ):
         for value, expected, zero, negative in list[tuple[Byte, Byte, bool, bool]](
@@ -1153,7 +1163,7 @@ def test_decrement(subtests: SubTests) -> None:
                 computer = (
                     MinimalComputer.program_builder()
                     .instruction(f"ld{register}", value)
-                    .instruction(instruction)
+                    .apply(instruction)
                     .hlt()
                     .run()
                 )

@@ -720,7 +720,7 @@ class MinimalComputer(Computer):
         )
         return instruction_set
 
-    class _ProgramBuilder(ProgramBuilder):
+    class ProgramBuilder(ProgramBuilder):
         def nop(self) -> Self:
             return self.instruction("nop")
 
@@ -850,6 +850,24 @@ class MinimalComputer(Computer):
         def bvc(self, arg: int | Word | str) -> Self:
             return self.instruction("bvc").absolute(arg)
 
+        def inc(self) -> Self:
+            return self.instruction("inc")
+
+        def dec(self) -> Self:
+            return self.instruction("dec")
+
+        def inx(self) -> Self:
+            return self.instruction("inx")
+
+        def dex(self) -> Self:
+            return self.instruction("dex")
+
+        def iny(self) -> Self:
+            return self.instruction("iny")
+
+        def dey(self) -> Self:
+            return self.instruction("dey")
+
         def load(self) -> "MinimalComputer":
             return MinimalComputer(data=self.build())
 
@@ -859,8 +877,8 @@ class MinimalComputer(Computer):
             return computer
 
     @classmethod
-    def program_builder(cls) -> _ProgramBuilder:
-        return cls._ProgramBuilder.for_instruction_set(cls.instruction_set())
+    def program_builder(cls) -> ProgramBuilder:
+        return cls.ProgramBuilder.for_instruction_set(cls.instruction_set())
 
     def __init__(
         self,

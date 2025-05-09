@@ -202,3 +202,11 @@ def test_pending_instruction_then_data() -> None:
             Program.Instruction("lda", Program.Instruction.Absolute("label"))
         ).with_value(Byte(0xAB))
     )
+
+
+def test_apply() -> None:
+    assert program_builder.apply(
+        lambda b: b.instruction("lda", 0x10)
+    ).build() == program.with_statement(
+        Program.Instruction("lda", Program.Instruction.Immediate(Byte(0x10)))
+    )
