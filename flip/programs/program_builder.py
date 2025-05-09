@@ -30,7 +30,7 @@ class ProgramBuilder(Errorable):
     ) -> Self:
         return replace(self, _pending_instruction=instruction)
 
-    def _with_arg(self, arg: Program.Instruction.Arg) -> Self:
+    def with_arg(self, arg: Program.Instruction.Arg) -> Self:
         if self._pending_instruction is None:
             raise self._error("No instruction to add arg to.", self.NoInstruction)
         if self._pending_instruction.arg is not None:
@@ -44,9 +44,13 @@ class ProgramBuilder(Errorable):
             )._with_pending_instruction(None)
         return self
 
-    def instruction(self, name: str, arg: int | Byte | str | None = None) -> Self:
+    def instruction(
+        self, name: str, arg: Program.Instruction.Arg | int | Byte | str | None = None
+    ) -> Self:
         self = self._collapse_pending_instruction()
         match arg:
+            case Program.Instruction.Arg():
+                return self._with_pending_instruction(Program.Instruction(name, arg))
             case int():
                 return self._with_pending_instruction(
                     Program.Instruction(name, Program.Instruction.Immediate(Byte(arg)))
@@ -65,37 +69,37 @@ class ProgramBuilder(Errorable):
     def immediate(self, arg: int | Byte) -> Self:
         match arg:
             case int():
-                return self._with_arg(Program.Instruction.Immediate(Byte(arg)))
+                return self.with_arg(Program.Instruction.Immediate(Byte(arg)))
             case Byte():
-                return self._with_arg(Program.Instruction.Immediate(arg))
+                return self.with_arg(Program.Instruction.Immediate(arg))
 
     def absolute(self, arg: int | Word | str) -> Self:
         match arg:
             case int():
-                return self._with_arg(Program.Instruction.Absolute(Word(arg)))
+                return self.with_arg(Program.Instruction.Absolute(Word(arg)))
             case Word() | str():
-                return self._with_arg(Program.Instruction.Absolute(arg))
+                return self.with_arg(Program.Instruction.Absolute(arg))
 
     def zero_page(self, arg: int | Byte) -> Self:
         match arg:
             case int():
-                return self._with_arg(Program.Instruction.ZeroPage(Byte(arg)))
+                return self.with_arg(Program.Instruction.ZeroPage(Byte(arg)))
             case Byte():
-                return self._with_arg(Program.Instruction.ZeroPage(arg))
+                return self.with_arg(Program.Instruction.ZeroPage(arg))
 
     def index_x(self, arg: int | Word | str) -> Self:
         match arg:
             case int():
-                return self._with_arg(Program.Instruction.IndexX(Word(arg)))
+                return self.with_arg(Program.Instruction.IndexX(Word(arg)))
             case Word() | str():
-                return self._with_arg(Program.Instruction.IndexX(arg))
+                return self.with_arg(Program.Instruction.IndexX(arg))
 
     def index_y(self, arg: int | Word | str) -> Self:
         match arg:
             case int():
-                return self._with_arg(Program.Instruction.IndexY(Word(arg)))
+                return self.with_arg(Program.Instruction.IndexY(Word(arg)))
             case Word() | str():
-                return self._with_arg(Program.Instruction.IndexY(arg))
+                return self.with_arg(Program.Instruction.IndexY(arg))
 
     def label(self, name: str) -> Self:
         self = self._collapse_pending_instruction()

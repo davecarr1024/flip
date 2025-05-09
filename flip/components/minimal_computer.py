@@ -27,12 +27,24 @@ class MinimalComputer(Computer):
     @staticmethod
     @cache
     def _cached_instruction_set() -> InstructionSet:
-        def transfer_byte(from_: str, to: str) -> _Apply:
-            """Transfer a byte from one byte register to another."""
+        def transfer_byte(
+            from_: str,
+            to: str,
+            /,
+            analyze_result: bool = False,
+            extra_controls: Optional[list[str]] = None,
+        ) -> _Apply:
+            """Transfer a byte from one byte register to another.
+
+            If analyze_result is True, then the result_analyzer will read the
+            byte as it goes by and update statuses based on the value.
+            """
             return lambda builder: (
                 builder.step(
                     f"{from_}.write",
                     f"{to}.read",
+                    *(["result_analyzer.read"] if analyze_result else []),
+                    *(extra_controls if extra_controls is not None else []),
                 )
             )
 
@@ -56,7 +68,10 @@ class MinimalComputer(Computer):
                 )
             )
 
-        def load_immediate(to: str) -> _Apply:
+        def load_immediate(
+            to: str,
+            analyze_result: bool = False,
+        ) -> _Apply:
             """Load the next program byte into a byte register."""
             return lambda builder: (
                 builder
@@ -68,10 +83,13 @@ class MinimalComputer(Computer):
                     ),
                 )
                 # load byte from memory to {to} and inc pc
-                .step(
-                    "memory.write",
-                    f"{to}.read",
-                    "program_counter.increment",
+                .apply(
+                    transfer_byte(
+                        "memory",
+                        to,
+                        analyze_result=analyze_result,
+                        extra_controls=["program_counter.increment"],
+                    )
                 )
             )
 
@@ -87,18 +105,31 @@ class MinimalComputer(Computer):
                 .apply(transfer_byte(buffer, f"{to}.low"))
             )
 
-        def load_absolute(to: str, buffer: str = "arg_buffer.low") -> _Apply:
+        def load_absolute(
+            to: str,
+            /,
+            buffer: str = "arg_buffer.low",
+            analyze_result: bool = False,
+        ) -> _Apply:
             """Load a byte from memory at the address from the next two program bytes"""
             return lambda builder: (
                 builder
                 # Load address at pc to memory.address
                 .apply(load_word_at_pc("memory.address", buffer=buffer))
                 # Load byte at memory.address to {to}
-                .apply(transfer_byte("memory", to))
+                # load byte from memory to {to} and inc pc
+                .apply(
+                    transfer_byte(
+                        "memory",
+                        to,
+                        analyze_result=analyze_result,
+                    )
+                )
             )
 
         def load_indexed_address(
             index: str,
+            /,
             buffer: str = "arg_buffer.low",
         ) -> _Apply:
             """Load an indexed address into memory.address
@@ -143,7 +174,9 @@ class MinimalComputer(Computer):
         def load_indexed(
             to: str,
             index: str,
+            /,
             buffer: str = "arg_buffer.low",
+            analyze_result: bool = False,
         ) -> _Apply:
             """Load a byte byte from an indexed location in memory.
 
@@ -157,10 +190,20 @@ class MinimalComputer(Computer):
                 # Load indexed address to memory.address.
                 .apply(load_indexed_address(index, buffer=buffer))
                 # Load byte at memory.address to {to}.
-                .apply(transfer_byte("memory", to))
+                .apply(
+                    transfer_byte(
+                        "memory",
+                        to,
+                        analyze_result=analyze_result,
+                    )
+                )
             )
 
-        def load_zero_page(to: str) -> _Apply:
+        def load_zero_page(
+            to: str,
+            /,
+            analyze_result: bool = False,
+        ) -> _Apply:
             """Load a byte at the next address, in the zero page."""
             return lambda builder: (
                 builder
@@ -169,7 +212,13 @@ class MinimalComputer(Computer):
                 # Reset memory.address.high
                 .step("memory.address.high.reset")
                 # Load byte at memory.address to {to}
-                .apply(transfer_byte("memory", to))
+                .apply(
+                    transfer_byte(
+                        "memory",
+                        to,
+                        analyze_result=analyze_result,
+                    )
+                )
             )
 
         def store_absolute(from_: str, buffer: str = "arg_buffer.low") -> _Apply:
@@ -307,18 +356,45 @@ class MinimalComputer(Computer):
             instruction_builder = (
                 builder.instruction(name)
                 .mode("immediate")
-                .apply(load_immediate(to_))
+                .apply(
+                    load_immediate(
+                        to_,
+                        analyze_result=True,
+                    )
+                )
                 .mode("absolute")
-                .apply(load_absolute(to_))
+                .apply(
+                    load_absolute(
+                        to_,
+                        analyze_result=True,
+                    )
+                )
                 .mode("zero_page")
-                .apply(load_zero_page(to_))
+                .apply(
+                    load_zero_page(
+                        to_,
+                        analyze_result=True,
+                    )
+                )
             )
             if include_index_addressing_modes:
                 instruction_builder = (
                     instruction_builder.mode("index_x")
-                    .apply(load_indexed(to_, "x"))
+                    .apply(
+                        load_indexed(
+                            to_,
+                            "x",
+                            analyze_result=True,
+                        )
+                    )
                     .mode("index_y")
-                    .apply(load_indexed(to_, "y"))
+                    .apply(
+                        load_indexed(
+                            to_,
+                            "y",
+                            analyze_result=True,
+                        )
+                    )
                 )
             return instruction_builder.end_instruction()
 

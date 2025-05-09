@@ -132,8 +132,8 @@ class Computer(Component, ABC):
         return self.__program_counter
 
     @property
-    def result_analyzer(self) -> ResultAnalyzer:
-        return self.__result_analyzer
+    def controller(self) -> Controller:
+        return self.__controller
 
     def load(self, data: Mapping[Word, Byte] | Program | ProgramBuilder) -> None:
         self._log(f"loading data {data}")

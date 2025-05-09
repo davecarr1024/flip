@@ -1,5 +1,8 @@
+from pytest_subtests import SubTests
+
 from flip.bytes import Byte, Word
 from flip.components import MinimalComputer
+from flip.programs import Program
 
 
 def test_statuses() -> None:
@@ -904,3 +907,155 @@ def test_cmp_absolute_jump() -> None:
         .run()
     )
     assert computer.a.value == Byte(0x01)
+
+
+def test_load_instructions_set_status(subtests: SubTests) -> None:
+    for instruction in list[str](["lda", "ldx", "ldy"]):
+        for arg, zero, negative in list[tuple[Program.Instruction.Arg, bool, bool]](
+            [
+                (
+                    Program.Instruction.Immediate(Byte(0x00)),
+                    True,
+                    False,
+                ),
+                (
+                    Program.Instruction.Immediate(Byte(0x01)),
+                    False,
+                    False,
+                ),
+                (
+                    Program.Instruction.Immediate(Byte(0x80)),
+                    False,
+                    True,
+                ),
+                (
+                    Program.Instruction.Absolute("zero_data"),
+                    True,
+                    False,
+                ),
+                (
+                    Program.Instruction.Absolute("one_data"),
+                    False,
+                    False,
+                ),
+                (
+                    Program.Instruction.Absolute("negative_data"),
+                    False,
+                    True,
+                ),
+                (
+                    Program.Instruction.ZeroPage(Byte(0x03)),
+                    True,
+                    False,
+                ),
+                (
+                    Program.Instruction.ZeroPage(Byte(0x04)),
+                    False,
+                    False,
+                ),
+                (
+                    Program.Instruction.ZeroPage(Byte(0x05)),
+                    False,
+                    True,
+                ),
+            ]
+        ):
+            with subtests.test(
+                instruction=instruction,
+                arg=arg,
+                zero=zero,
+                negative=negative,
+            ):
+                computer = (
+                    MinimalComputer.program_builder()
+                    .instruction(instruction, arg)
+                    .hlt()
+                    .label("zero_data")
+                    .data(0x00)
+                    .label("one_data")
+                    .data(0x01)
+                    .label("negative_data")
+                    .data(0x80)
+                    .run()
+                )
+                status_values = computer.controller.status.status_values
+                assert status_values["result_analyzer.zero"] == zero
+                assert status_values["result_analyzer.negative"] == negative
+
+
+def test_lda_index_sets_status(subtests: SubTests) -> None:
+    for index_instruction, index_arg, arg, zero, negative in list[
+        tuple[
+            str,
+            Program.Instruction.Immediate,
+            Program.Instruction.IndexX | Program.Instruction.IndexY,
+            bool,
+            bool,
+        ]
+    ](
+        [
+            (
+                "ldx",
+                Program.Instruction.Immediate(Byte(0x00)),
+                Program.Instruction.IndexX("data"),
+                True,
+                False,
+            ),
+            (
+                "ldx",
+                Program.Instruction.Immediate(Byte(0x01)),
+                Program.Instruction.IndexX("data"),
+                False,
+                False,
+            ),
+            (
+                "ldx",
+                Program.Instruction.Immediate(Byte(0x02)),
+                Program.Instruction.IndexX("data"),
+                False,
+                True,
+            ),
+            (
+                "ldy",
+                Program.Instruction.Immediate(Byte(0x00)),
+                Program.Instruction.IndexY("data"),
+                True,
+                False,
+            ),
+            (
+                "ldy",
+                Program.Instruction.Immediate(Byte(0x01)),
+                Program.Instruction.IndexY("data"),
+                False,
+                False,
+            ),
+            (
+                "ldy",
+                Program.Instruction.Immediate(Byte(0x02)),
+                Program.Instruction.IndexY("data"),
+                False,
+                True,
+            ),
+        ]
+    ):
+        with subtests.test(
+            index_instruction=index_instruction,
+            index_arg=index_arg,
+            arg=arg,
+            zero=zero,
+            negative=negative,
+        ):
+            computer = (
+                MinimalComputer.program_builder()
+                .instruction(index_instruction, index_arg)
+                .instruction("lda", arg)
+                .hlt()
+                .label("data")
+                .data(0x00)
+                .data(0x01)
+                .data(0x80)
+                .run()
+            )
+            status_values = computer.controller.status.status_values
+            assert status_values["result_analyzer.zero"] == zero
+            assert status_values["result_analyzer.negative"] == negative
