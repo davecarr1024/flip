@@ -142,3 +142,17 @@ def test_encode_opcode_controls(subtests: SubTests) -> None:
     ):
         with subtests.test(operation=operation, expected=expected):
             assert alu.encode_opcode_controls(operation_set, operation) == expected
+
+
+def test_rhs_one() -> None:
+    alu.rhs = Byte(0x00)
+    alu.rhs_one = False
+    assert alu.rhs == Byte(0x00)
+    assert not alu.rhs_one
+    alu.tick()
+    assert alu.rhs == Byte(0x00)
+    assert not alu.rhs_one
+    alu.rhs_one = True
+    alu.tick()
+    assert alu.rhs == Byte(0x01)
+    assert not alu.rhs_one

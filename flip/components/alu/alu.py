@@ -29,6 +29,7 @@ class Alu(Component):
         self.__lhs = Register(name="lhs", parent=self, bus=bus)
         self.__rhs = Register(name="rhs", parent=self, bus=bus)
         self.__output = Register(name="output", parent=self, bus=bus)
+        self.__rhs_one = Control(name="rhs_one", parent=self)
         self.__carry_in = Control(name="carry_in", parent=self, auto_clear=False)
         self.__carry_out = Status(name="carry_out", parent=self)
         self.__zero = Status(name="zero", parent=self)
@@ -55,6 +56,14 @@ class Alu(Component):
         self.negative = value.negative
         self.overflow = value.overflow
         self.half_carry = value.half_carry
+
+    @property
+    def rhs_one(self) -> bool:
+        return self.__rhs_one.value
+
+    @rhs_one.setter
+    def rhs_one(self, value: bool) -> None:
+        self.__rhs_one.value = value
 
     @property
     def carry_out(self) -> bool:
@@ -190,7 +199,14 @@ class Alu(Component):
         return self.__operation_set.operations_by_index[opcode - 1]
 
     @override
+    def _tick_read(self) -> None:
+        super()._tick_read()
+        if self.rhs_one:
+            self.rhs = Byte(0x01)
+
+    @override
     def _tick_process(self) -> None:
+        super()._tick_process()
         if (operation := self.operation) is not None:
             result = operation(self.lhs, self.rhs, self.carry_in)
             self._log(

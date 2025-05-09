@@ -1059,3 +1059,105 @@ def test_lda_index_sets_status(subtests: SubTests) -> None:
             status_values = computer.controller.status.status_values
             assert status_values["result_analyzer.zero"] == zero
             assert status_values["result_analyzer.negative"] == negative
+
+
+def test_increment(subtests: SubTests) -> None:
+    for instruction, register in list[tuple[str, str]](
+        [
+            ("inc", "a"),
+            ("inx", "x"),
+            ("iny", "y"),
+        ]
+    ):
+        for value, expected, zero, negative in list[tuple[Byte, Byte, bool, bool]](
+            [
+                (
+                    Byte(0xFF),
+                    Byte(0x00),
+                    True,
+                    False,
+                ),
+                (
+                    Byte(0x00),
+                    Byte(0x01),
+                    False,
+                    False,
+                ),
+                (
+                    Byte(0x7F),
+                    Byte(0x80),
+                    False,
+                    True,
+                ),
+            ]
+        ):
+            with subtests.test(
+                instruction=instruction,
+                register=register,
+                value=value,
+                expected=expected,
+                zero=zero,
+                negative=negative,
+            ):
+                computer = (
+                    MinimalComputer.program_builder()
+                    .instruction(f"ld{register}", value)
+                    .instruction(instruction)
+                    .hlt()
+                    .run()
+                )
+                assert computer.registers_by_name[register].value == expected
+                status_values = computer.controller.status.status_values
+                assert status_values["result_analyzer.zero"] == zero
+                assert status_values["result_analyzer.negative"] == negative
+
+
+def test_decrement(subtests: SubTests) -> None:
+    for instruction, register in list[tuple[str, str]](
+        [
+            ("dec", "a"),
+            ("dex", "x"),
+            ("dey", "y"),
+        ]
+    ):
+        for value, expected, zero, negative in list[tuple[Byte, Byte, bool, bool]](
+            [
+                (
+                    Byte(0x00),
+                    Byte(0xFF),
+                    False,
+                    True,
+                ),
+                (
+                    Byte(0x01),
+                    Byte(0x00),
+                    True,
+                    False,
+                ),
+                (
+                    Byte(0x80),
+                    Byte(0x7F),
+                    False,
+                    False,
+                ),
+            ]
+        ):
+            with subtests.test(
+                instruction=instruction,
+                register=register,
+                value=value,
+                expected=expected,
+                zero=zero,
+                negative=negative,
+            ):
+                computer = (
+                    MinimalComputer.program_builder()
+                    .instruction(f"ld{register}", value)
+                    .instruction(instruction)
+                    .hlt()
+                    .run()
+                )
+                assert computer.registers_by_name[register].value == expected
+                status_values = computer.controller.status.status_values
+                assert status_values["result_analyzer.zero"] == zero
+                assert status_values["result_analyzer.negative"] == negative

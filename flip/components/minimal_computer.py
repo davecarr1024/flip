@@ -470,6 +470,54 @@ class MinimalComputer(Computer):
                 .end_instruction()
             )
 
+        def inc(
+            builder: InstructionSet.Builder,
+            name: str,
+            reg: str,
+        ) -> InstructionSet.Builder:
+            """Build an increment instruction for a register."""
+            return (
+                builder.instruction(name)
+                .mode("none")
+                .step(
+                    *MinimalComputer._encode_alu_opcode_controls("adc"),
+                    f"{reg}.write",
+                    "alu.lhs.read",
+                    "alu.rhs_one",
+                    "alu.carry_in.clear",
+                )
+                .step(
+                    "alu.output.write",
+                    f"{reg}.read",
+                    "result_analyzer.read",
+                )
+                .end_instruction()
+            )
+
+        def dec(
+            builder: InstructionSet.Builder,
+            name: str,
+            reg: str,
+        ) -> InstructionSet.Builder:
+            """Build a decrement instruction for a register."""
+            return (
+                builder.instruction(name)
+                .mode("none")
+                .step(
+                    *MinimalComputer._encode_alu_opcode_controls("sbc"),
+                    f"{reg}.write",
+                    "alu.lhs.read",
+                    "alu.rhs_one",
+                    "alu.carry_in",
+                )
+                .step(
+                    "alu.output.write",
+                    f"{reg}.read",
+                    "result_analyzer.read",
+                )
+                .end_instruction()
+            )
+
         def conditional_jump_instruction(
             builder: InstructionSet.Builder,
             name: str,
@@ -558,6 +606,18 @@ class MinimalComputer(Computer):
         builder = alu_unary_instruction(builder, "rol")
         # ror - rotate right
         builder = alu_unary_instruction(builder, "ror")
+        # inc - increment a
+        builder = inc(builder, "inc", "a")
+        # dec - decrement a
+        builder = dec(builder, "dec", "a")
+        # inx - increment x
+        builder = inc(builder, "inx", "x")
+        # dex - decrement x
+        builder = dec(builder, "dex", "x")
+        # iny - increment y
+        builder = inc(builder, "iny", "y")
+        # dey - decrement y
+        builder = dec(builder, "dey", "y")
         # cmp - compare
         builder = (
             builder.instruction("cmp")
@@ -816,6 +876,11 @@ class MinimalComputer(Computer):
         self.__a = self._create_register("a")
         self.__x = self._create_register("x")
         self.__y = self._create_register("y")
+        self.__registers_by_name: Mapping[str, Register] = {
+            "a": self.__a,
+            "x": self.__x,
+            "y": self.__y,
+        }
         self.__arg_buffer = self._create_word_register("arg_buffer")
 
     @property
@@ -829,3 +894,7 @@ class MinimalComputer(Computer):
     @property
     def y(self) -> Register:
         return self.__y
+
+    @property
+    def registers_by_name(self) -> Mapping[str, Register]:
+        return self.__registers_by_name
